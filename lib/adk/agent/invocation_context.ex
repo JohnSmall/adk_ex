@@ -16,7 +16,9 @@ defmodule ADK.Agent.InvocationContext do
           ended: boolean(),
           session_service: GenServer.server() | nil,
           artifact_service: term(),
-          memory_service: term()
+          memory_service: term(),
+          parent_map: %{String.t() => struct()},
+          root_agent: struct() | nil
         }
 
   defstruct [
@@ -28,8 +30,10 @@ defmodule ADK.Agent.InvocationContext do
     :session_service,
     :artifact_service,
     :memory_service,
+    :root_agent,
     run_config: %ADK.RunConfig{},
-    ended: false
+    ended: false,
+    parent_map: %{}
   ]
 
   @doc "Marks the invocation as ended."
@@ -47,4 +51,12 @@ defmodule ADK.Agent.InvocationContext do
   @doc "Returns a new context with a different branch."
   @spec with_branch(t(), String.t()) :: t()
   def with_branch(%__MODULE__{} = ctx, branch), do: %{ctx | branch: branch}
+
+  @doc "Returns a new context with a parent map."
+  @spec with_parent_map(t(), %{String.t() => struct()}) :: t()
+  def with_parent_map(%__MODULE__{} = ctx, parent_map), do: %{ctx | parent_map: parent_map}
+
+  @doc "Returns a new context with a root agent."
+  @spec with_root_agent(t(), struct()) :: t()
+  def with_root_agent(%__MODULE__{} = ctx, root_agent), do: %{ctx | root_agent: root_agent}
 end
