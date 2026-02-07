@@ -12,6 +12,7 @@ defmodule ADK.Flow do
   """
 
   alias ADK.Agent.{CallbackContext, InvocationContext}
+  alias ADK.Agent.Tree
   alias ADK.Event
   alias ADK.Event.Actions
   alias ADK.Model
@@ -131,7 +132,8 @@ defmodule ADK.Flow do
           |> update_ctx_from_event(model_event)
           |> update_ctx_from_event(tool_event)
 
-        {:ok, [model_event, tool_event], updated_ctx}
+        transfer_events = maybe_run_transfer(tool_event, updated_ctx)
+        {:ok, [model_event, tool_event] ++ transfer_events, updated_ctx}
       end
     end
   end
@@ -301,6 +303,8 @@ defmodule ADK.Flow do
   end
 
   defp finalize_tool_success(flow, tool_ctx, tool, fc, result) do
+    tool_ctx = maybe_set_transfer(tool_ctx, result)
+
     case run_after_tool_callbacks(flow.after_tool_callbacks, tool_ctx, tool, fc.args, result) do
       {:replaced, replaced_result, after_ctx} ->
         {after_ctx, make_response_part(fc, replaced_result)}
@@ -309,6 +313,12 @@ defmodule ADK.Flow do
         {after_ctx, make_response_part(fc, result)}
     end
   end
+
+  defp maybe_set_transfer(tool_ctx, %{"transfer_to_agent" => name}) when is_binary(name) do
+    %{tool_ctx | actions: %{tool_ctx.actions | transfer_to_agent: name}}
+  end
+
+  defp maybe_set_transfer(tool_ctx, _), do: tool_ctx
 
   defp finalize_tool_error(flow, tool_ctx, tool, fc, reason) do
     error_result = %{"error" => to_string(reason)}
@@ -383,6 +393,20 @@ defmodule ADK.Flow do
 
   defp model_name(%__MODULE__{model: nil}), do: nil
   defp model_name(%__MODULE__{model: model}), do: Model.name(model)
+
+  defp maybe_run_transfer(%Event{actions: %{transfer_to_agent: name}}, ctx)
+       when is_binary(name) do
+    case Tree.find_agent(ctx.root_agent, name) do
+      {:ok, target_agent} ->
+        transfer_ctx = InvocationContext.with_agent(ctx, target_agent)
+        target_agent.__struct__.run(target_agent, transfer_ctx) |> Enum.to_list()
+
+      :error ->
+        []
+    end
+  end
+
+  defp maybe_run_transfer(_event, _ctx), do: []
 
   defp update_ctx_from_event(ctx, %Event{actions: actions}) do
     if ctx.session && map_size(actions.state_delta) > 0 do

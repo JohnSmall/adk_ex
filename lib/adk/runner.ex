@@ -195,8 +195,15 @@ defmodule ADK.Runner do
   end
 
   defp resolve_active_agent(event, runner) do
-    if event.author && event.author != "user" do
-      resolve_agent(runner, event.author)
+    cond do
+      is_binary(event.actions.transfer_to_agent) ->
+        resolve_agent(runner, event.actions.transfer_to_agent)
+
+      event.author && event.author != "user" ->
+        resolve_agent(runner, event.author)
+
+      true ->
+        nil
     end
   end
 

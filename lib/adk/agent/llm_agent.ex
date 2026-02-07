@@ -11,7 +11,7 @@ defmodule ADK.Agent.LlmAgent do
   alias ADK.Agent.{CallbackContext, InvocationContext}
   alias ADK.Event
   alias ADK.Flow
-  alias ADK.Flow.Processors.{Basic, Contents, Instructions, ToolProcessor}
+  alias ADK.Flow.Processors.{AgentTransfer, Basic, Contents, Instructions, ToolProcessor}
   alias ADK.Types.Content
 
   @type t :: %__MODULE__{
@@ -124,6 +124,7 @@ defmodule ADK.Agent.LlmAgent do
         &Basic.process/3,
         &ToolProcessor.process/3,
         &Instructions.process/3,
+        &AgentTransfer.process/3,
         &Contents.process/3
       ],
       before_model_callbacks: agent.before_model_callbacks,
