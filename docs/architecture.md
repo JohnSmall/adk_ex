@@ -4,7 +4,7 @@
 - **Project**: Elixir ADK
 - **Version**: 0.4.0
 - **Date**: 2026-02-08
-- **Status**: Phases 1-4 Complete, Phase 5 (Plugins, MCP, DB Sessions) Next
+- **Status**: Phases 1-5 Complete (240 tests adk_ex + 21 tests adk_ex_ecto)
 
 ---
 
@@ -18,36 +18,47 @@ User Message
      v
 ADK.Runner.run/5
      |
-     +--> Get/create session from SessionService
+     +--> Get/create session from SessionService (via runner.session_module)
+     +--> [plugin: on_user_message] (may modify user content)
      +--> Append user message event
+     +--> [plugin: before_run] (may short-circuit entire run)
      +--> Find agent to run (history scan or root)
      |
      +--> ADK.Agent.LlmAgent.run/2
      |         |
+     |         +--> [plugin: before_agent] (may short-circuit)
      |         +--> [before_agent_callbacks] (may short-circuit)
      |         |
      |         +--> ADK.Flow.run/2 (Stream.resource/3 loop)
      |         |         |
+     |         |         +--> Resolve toolsets (dynamic tool providers)
      |         |         +--> Build LlmRequest via 5 processors:
      |         |         |       Basic -> ToolProcessor -> Instructions -> AgentTransfer -> Contents
      |         |         |
+     |         |         +--> [plugin: before_model] (may short-circuit)
      |         |         +--> [before_model_callbacks] (may short-circuit)
      |         |         +--> Model.generate_content/3 (Gemini/Claude/Mock)
+     |         |         +--> [plugin: after_model] (may replace)
      |         |         +--> [after_model_callbacks] (may replace)
      |         |         |
      |         |         +--> If function_calls in response:
-     |         |         |       [before_tool_callbacks] -> Tool.run/3 -> [after_tool_callbacks]
+     |         |         |       [plugin: before_tool] -> [before_tool_callbacks]
+     |         |         |       -> Tool.run/3
+     |         |         |       -> [plugin: after_tool] -> [after_tool_callbacks]
      |         |         |       Build tool response event -> loop back to LLM
      |         |         |
      |         |         +--> If text response (final_response?):
      |         |                 Emit event, halt loop
      |         |
+     |         +--> [plugin: after_agent] (may short-circuit)
      |         +--> [after_agent_callbacks] (may short-circuit)
      |         +--> If output_key: save text to state_delta
      |
      +--> For each event:
+     |       +--> [plugin: on_event] (may modify event)
      |       +--> Commit to SessionService (non-partial only)
      |       +--> Yield to caller
+     +--> [plugin: after_run] (notification)
      |
      v
 Stream of Events returned to application
@@ -126,6 +137,27 @@ lib/adk/
     load_memory.ex                   # LoadMemory tool (searches memory via context)
     load_artifacts.ex                # LoadArtifacts tool (loads artifacts by name)
   telemetry.ex                       # Dual telemetry: OTel spans + :telemetry events
+
+  # === Phase 5: Plugins, Toolsets ===
+  plugin.ex                          # Plugin struct (12 callback fields) + new/1
+  plugin/
+    manager.ex                       # Plugin.Manager — chains plugins, first non-nil wins
+  tool/
+    toolset.ex                       # Toolset behaviour (name/1, tools/2)
+```
+
+### Database Sessions (separate package: `adk_ex_ecto`)
+
+```
+/workspace/adk_ex_ecto/
+  lib/adk_ex_ecto/
+    session_service.ex               # Implements ADK.Session.Service via Ecto
+    migration.ex                     # Creates 4 tables with composite PKs
+    schemas/
+      session.ex                     # adk_sessions table
+      event.ex                       # adk_events table
+      app_state.ex                   # adk_app_states table
+      user_state.ex                  # adk_user_states table
 ```
 
 ---
@@ -193,6 +225,32 @@ All callbacks follow the same pattern: `{value | nil, updated_context}`.
 | after_tool | `(ToolContext, tool, args, result -> {map \| nil, ToolContext})` | Non-nil map replaces result |
 
 Multiple callbacks of same type are chained; first non-nil return wins.
+
+### Plugin System (Phase 5)
+
+Plugins hook into the entire agent lifecycle via `ADK.Plugin` structs with 12 callback fields. Plugins are managed by `ADK.Plugin.Manager` and run **before** agent callbacks at every hook point.
+
+**Plugin-specific hooks (Runner level):**
+
+| Hook | Signature | Behavior |
+|------|-----------|----------|
+| on_user_message | `(InvocationContext, Content -> {Content \| nil, InvocationContext})` | May modify user input |
+| before_run | `(InvocationContext -> {Content \| nil, InvocationContext})` | May short-circuit entire run |
+| after_run | `(InvocationContext -> :ok)` | Notification only, no short-circuit |
+| on_event | `(InvocationContext, Event -> {Event \| nil, InvocationContext})` | May modify each event |
+
+**Agent/Model/Tool hooks** reuse the same callback signatures as agent callbacks (above), but plugins are checked first. If a plugin returns non-nil, agent callbacks are skipped entirely.
+
+### Toolset System (Phase 5)
+
+`ADK.Tool.Toolset` is a behaviour for dynamic tool providers resolved at runtime:
+
+```elixir
+@callback name(toolset :: struct()) :: String.t()
+@callback tools(toolset :: struct(), ctx :: InvocationContext.t()) :: {:ok, [struct()]} | {:error, term()}
+```
+
+Toolsets are resolved in `Flow.run_one_step` before building the LLM request. Errors are logged but don't crash the flow.
 
 ---
 
@@ -266,6 +324,9 @@ Each processor is a function `(InvocationContext, LlmRequest, flow_state) -> {:o
 | Model execution | `model.__struct__.generate_content(model, req, stream)` | Same pattern |
 | ParallelAgent concurrency | `Task.async` + `Task.await_many` | Branch isolation per sub-agent |
 | SequentialAgent reuse | LoopAgent(max_iterations=1) | Matches Go ADK pattern |
+| Plugin hooks | `ADK.Plugin` struct + `Manager` | Callbacks before agent callbacks; first non-nil wins |
+| Toolsets | `ADK.Tool.Toolset` behaviour | Dynamic tool providers resolved at runtime |
+| Session dispatch | `Runner.session_module` field | Pluggable session backends (InMemory, Ecto, custom) |
 
 ---
 
@@ -325,11 +386,12 @@ Each processor is a function `(InvocationContext, LlmRequest, flow_state) -> {:o
 
 ## 12. Testing Strategy
 
-### Unit Tests (217 passing)
+### Unit Tests (240 passing in adk_ex, 21 in adk_ex_ecto)
 - **Phase 1 (75)**: Types, Event, Session/State/InMemory, Agent/CustomAgent/Tree
 - **Phase 2 (63)**: LlmRequest, LlmResponse, Mock, FunctionTool, ToolContext, Instructions processor, Contents processor, Flow (7 tests), LlmAgent (6 tests), Runner (6 tests)
 - **Phase 3 (30)**: LoopAgent, SequentialAgent, ParallelAgent, TransferToAgent, AgentTransfer processor, multi-agent integration
 - **Phase 4 (49)**: Memory InMemory (10), Artifact InMemory (17), Context helpers (7), LoadMemory (4), LoadArtifacts (4), Telemetry (7)
+- **Phase 5 (23 adk_ex + 21 adk_ex_ecto)**: Plugin Manager (18), Toolset (5), SessionService (21 in adk_ex_ecto)
 
 ### Integration Tests (4, excluded by default)
 - `test/integration/gemini_test.exs` — Requires `GEMINI_API_KEY`

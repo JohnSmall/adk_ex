@@ -18,7 +18,7 @@ Google provides the ADK in Python (reference), TypeScript, Go, and Java. We are 
 
 ## 2. Current Status
 
-**Phases 1-4 are COMPLETE.** The project lives at `/workspace/adk_ex/` (github.com/JohnSmall/adk_ex).
+**All 5 phases are COMPLETE.** The project lives at `/workspace/adk_ex/` (github.com/JohnSmall/adk_ex). Database persistence is in a separate package at `/workspace/adk_ex_ecto/` (github.com/JohnSmall/adk_ex_ecto).
 
 ### What's Built
 
@@ -91,14 +91,38 @@ Google provides the ADK in Python (reference), TypeScript, Go, and Java. We are 
 | `ADK.Tool.LoadArtifacts` | Tool: loads artifacts by name | `lib/adk/tool/load_artifacts.ex` |
 | `ADK.Telemetry` | Dual: OpenTelemetry spans + :telemetry events | `lib/adk/telemetry.ex` |
 
-### Test Coverage
-- 217 tests passing (75 + 63 + 30 + 49)
-- 4 integration tests (Gemini + Claude, excluded by default)
-- Credo: clean
-- Dialyzer: clean
+#### Phase 5: Plugins, Toolsets, and Database Sessions (+23 tests = 240 total, +21 in adk_ex_ecto)
 
-### What's Next
-Phase 5: Plugins, MCP, Database Sessions — see `docs/implementation-plan.md`
+| Module | Purpose | File |
+|--------|---------|------|
+| `ADK.Plugin` | Plugin struct with 12 callback fields + new/1 | `lib/adk/plugin.ex` |
+| `ADK.Plugin.Manager` | Chains plugins, first non-nil wins, nil-safe | `lib/adk/plugin/manager.ex` |
+| `ADK.Tool.Toolset` | Behaviour for dynamic tool providers | `lib/adk/tool/toolset.ex` |
+| `ADK.Runner` (updated) | Added `plugins`, `session_module` fields | `lib/adk/runner.ex` |
+| `ADK.Flow` (updated) | Plugin hooks at model/tool level, toolset resolution | `lib/adk/flow.ex` |
+| `ADK.Agent.LlmAgent` (updated) | Plugin before/after agent, `toolsets` field | `lib/adk/agent/llm_agent.ex` |
+| `ADK.Agent.InvocationContext` (updated) | Added `plugin_manager` field | `lib/adk/agent/invocation_context.ex` |
+
+#### Database Sessions (separate package: `adk_ex_ecto`, 21 tests)
+
+| Module | Purpose | File |
+|--------|---------|------|
+| `ADKExEcto.SessionService` | Ecto-backed session service | `lib/adk_ex_ecto/session_service.ex` |
+| `ADKExEcto.Migration` | Creates 4 tables with composite PKs | `lib/adk_ex_ecto/migration.ex` |
+| `ADKExEcto.Schemas.Session` | Sessions table schema | `lib/adk_ex_ecto/schemas/session.ex` |
+| `ADKExEcto.Schemas.Event` | Events table schema | `lib/adk_ex_ecto/schemas/event.ex` |
+| `ADKExEcto.Schemas.AppState` | App state table schema | `lib/adk_ex_ecto/schemas/app_state.ex` |
+| `ADKExEcto.Schemas.UserState` | User state table schema | `lib/adk_ex_ecto/schemas/user_state.ex` |
+
+### Test Coverage
+- **adk_ex**: 240 tests passing (75 + 63 + 30 + 49 + 23)
+- **adk_ex_ecto**: 21 tests passing
+- 4 integration tests (Gemini + Claude, excluded by default)
+- Credo: clean (both packages)
+- Dialyzer: clean (both packages)
+
+### Project Status
+All 5 phases are complete. See `docs/implementation-plan.md` for full details.
 
 ---
 
@@ -109,6 +133,7 @@ Phase 5: Plugins, MCP, Database Sessions — see `docs/implementation-plan.md`
 | Resource | Location |
 |----------|----------|
 | **This project (Elixir ADK)** | `/workspace/adk_ex/` |
+| **Database sessions (separate package)** | `/workspace/adk_ex_ecto/` |
 | **A2A protocol (separate package)** | `/workspace/a2a_ex/` |
 | **Google ADK Go source (PRIMARY ref)** | `/workspace/adk-go/` |
 | **Google ADK Python source** | `/workspace/google-adk-venv/lib/python3.13/site-packages/google/adk/` |
@@ -134,9 +159,12 @@ Phase 5: Plugins, MCP, Database Sessions — see `docs/implementation-plan.md`
 
 ```
 User Message -> Runner -> Agent -> Flow -> LLM
-                  |                  |       |
-                  |               [tool calls loop]
-                  |                  |
+                  |          |        |       |
+              [plugins]  [plugins] [plugins]  |
+                  |          |     [tool calls loop]
+                  |          |     [agent transfer]
+                  |          |     [toolset resolution]
+                  |          |        |
                [commits events + state to Session]
                   |
                [yields Events to application]
@@ -146,24 +174,30 @@ User Message -> Runner -> Agent -> Flow -> LLM
 
 ```
 Runner.run/5
-  |-- Get/create session from SessionService
+  |-- Get/create session from SessionService (via runner.session_module)
+  |-- [plugin: on_user_message] (may modify user content)
   |-- Append user message event
+  |-- [plugin: before_run] (may short-circuit entire run)
   |-- Find agent to run (transfer check -> history scan -> root)
   +-- LlmAgent.run/2
-        |-- [before_agent_callbacks] (may short-circuit)
+        |-- [plugin: before_agent] -> [before_agent_callbacks] (may short-circuit)
         |-- Flow.run/2 (Stream.resource/3 loop)
+        |     |-- Resolve toolsets (dynamic tool providers)
         |     |-- Build LlmRequest via 5 processors:
         |     |     Basic -> ToolProcessor -> Instructions -> AgentTransfer -> Contents
-        |     |-- [before_model_callbacks] (may short-circuit)
+        |     |-- [plugin: before_model] -> [before_model_callbacks] (may short-circuit)
         |     |-- Model.generate_content/3 (Gemini/Claude/Mock)
-        |     |-- [after_model_callbacks] (may replace)
+        |     |-- [plugin: after_model] -> [after_model_callbacks] (may replace)
         |     |-- If function_calls in response:
-        |     |     [before_tool] -> Tool.run/3 -> maybe_set_transfer -> [after_tool]
+        |     |     [plugin: before_tool] -> [before_tool] -> Tool.run/3
+        |     |     -> maybe_set_transfer -> [plugin: after_tool] -> [after_tool]
         |     |     If transfer_to_agent set: run target agent (maybe_run_transfer)
         |     |     Build tool response event -> loop back to LLM
         |     +-- If text response (final): emit event, halt
-        |-- [after_agent_callbacks] (may short-circuit)
+        |-- [plugin: after_agent] -> [after_agent_callbacks] (may short-circuit)
         +-- If output_key: save text to state_delta
+  |-- For each event: [plugin: on_event] (may modify)
+  +-- [plugin: after_run] (notification)
 ```
 
 ### Agent Types
@@ -188,6 +222,8 @@ All callbacks return `{value | nil, updated_context}`. Nil = continue, non-nil =
 | after_model | `(CallbackContext, LlmResponse -> {LlmResponse \| nil, CallbackContext})` | Non-nil LlmResponse replaces |
 | before_tool | `(ToolContext, tool, args -> {map \| nil, ToolContext})` | Non-nil map skips tool |
 | after_tool | `(ToolContext, tool, args, result -> {map \| nil, ToolContext})` | Non-nil map replaces result |
+
+**Plugin hooks** (Phase 5): Plugins use the same callback signatures but run **before** agent callbacks. If a plugin returns non-nil, agent callbacks are skipped entirely. Additional plugin-only hooks: `on_user_message`, `before_run`, `after_run` (notification only), `on_event`.
 
 ### State Prefixes
 
@@ -219,7 +255,7 @@ All callbacks return `{value | nil, updated_context}`. Nil = continue, non-nil =
 - **Module names**: `ADK.*` (module prefix is independent of hex name, like `phoenix` uses `Phoenix.*`)
 - **Source paths**: `lib/adk/`, `test/adk/` (unchanged)
 - **Telemetry events**: `[:adk_ex, :llm | :tool, :start | :stop | :exception]`
-- **Database persistence** will be a separate package: `adk_ex_ecto` (keeps core lightweight)
+- **Database persistence** is a separate package: `adk_ex_ecto` at `/workspace/adk_ex_ecto/` (keeps core lightweight)
 
 ### Critical Gotchas
 
@@ -231,6 +267,9 @@ All callbacks return `{value | nil, updated_context}`. Nil = continue, non-nil =
 6. **Test module names**: Use unique names to avoid cross-file collisions
 7. **OTel span testing**: Use `otel_simple_processor.set_exporter(:otel_exporter_pid, self())` in setup. Span name is at `elem(span, 6)` (not 2) in the Erlang span record. Must restart opentelemetry app with proper processor config.
 8. **Dialyzer unreachable branches**: If a function always returns `{:ok, _}`, don't pattern match `{:error, _}` — dialyzer flags it
+9. **FunctionTool field**: Use `handler:` not `function:` in `FunctionTool.new/1`
+10. **Plugin nil safety**: All `Plugin.Manager.run_*` functions accept `nil` as first arg — no nil checks needed at call sites
+11. **SQLite in-memory testing**: Don't use Ecto sandbox with pool_size 1. Clean tables in setup instead.
 
 ---
 
@@ -239,7 +278,7 @@ All callbacks return `{value | nil, updated_context}`. Nil = continue, non-nil =
 ### Running Tests
 ```bash
 cd /workspace/adk_ex
-mix test                                        # Run all unit tests (217)
+mix test                                        # Run all unit tests (240)
 mix test test/integration/ --include integration # Run integration tests
 mix test --trace                                 # Run with verbose output
 mix credo                                        # Static analysis

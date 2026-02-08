@@ -4,7 +4,7 @@
 - **Project**: Elixir ADK - An Elixir/OTP port of Google's Agent Development Kit
 - **Version**: 0.4.0
 - **Date**: 2026-02-08
-- **Status**: Phases 1-4 Complete, Phase 5 (Plugins, MCP, DB Sessions) Next
+- **Status**: Phases 1-5 Complete (240 tests adk_ex + 21 tests adk_ex_ecto)
 - **GitHub**: github.com/JohnSmall/adk_ex
 
 ---
@@ -65,7 +65,10 @@ The Elixir ADK is a standalone Mix project (hex package: `adk_ex`) that provides
 ```
 User Message -> Runner -> Agent -> Flow -> LLM
                   |          |        |       |
+              [plugins]  [plugins] [plugins]  |
                   |          |     [tool calls loop]
+                  |          |     [agent transfer]
+                  |          |     [toolset resolution]
                   |          |        |
                [commits events + state to Session]
                   |
@@ -112,8 +115,10 @@ User Message -> Runner -> Agent -> Flow -> LLM
 | LoadMemory tool | `ADK.Tool.LoadMemory` | Done (Phase 4) |
 | LoadArtifacts tool | `ADK.Tool.LoadArtifacts` | Done (Phase 4) |
 | Telemetry (OTel + :telemetry) | `ADK.Telemetry` | Done (Phase 4) |
-| Database session service | `ADK.Session.Database` | Phase 5 |
-| Plugin system | `ADK.Plugin` | Phase 5 |
+| Plugin struct | `ADK.Plugin` | Done (Phase 5) |
+| Plugin manager | `ADK.Plugin.Manager` | Done (Phase 5) |
+| Toolset behaviour | `ADK.Tool.Toolset` | Done (Phase 5) |
+| Database session service | `ADKExEcto.SessionService` | Done (Phase 5, separate package) |
 
 ### Key Design Decisions
 
@@ -133,6 +138,10 @@ User Message -> Runner -> Agent -> Flow -> LLM
 | ParallelAgent uses Task.async | No TaskSupervisor needed — parent process supervises |
 | A2A as separate package | ADK is transport-agnostic; A2A adds HTTP/Plug deps |
 | Transfer in Flow, not Runner | Transfer executes immediately after tool call, same turn |
+| Plugins run before agent callbacks | First non-nil return short-circuits; consistent priority order |
+| Toolset behaviour for dynamic tools | Runtime tool resolution; foundation for future MCP integration |
+| Database sessions as separate package | `adk_ex_ecto` keeps Ecto/DB deps out of core `adk_ex` |
+| Session dispatch via module field | `Runner.session_module` enables pluggable session backends |
 
 ---
 
@@ -198,7 +207,7 @@ User Message -> Runner -> Agent -> Flow -> LLM
 - **Dev/test dependencies**: ex_doc, dialyxir, credo, opentelemetry
 - **No GenAI SDK**: Direct REST API calls for LLM providers
 - **No HTTP server deps**: No plug, phoenix, bandit (those belong in a2a_ex)
-- **No Ecto in core**: Database persistence via separate `adk_ex_ecto` package
+- **No Ecto in core**: Database persistence via separate `adk_ex_ecto` package (github.com/JohnSmall/adk_ex_ecto)
 - **Testing**: ExUnit, dialyzer, credo
 
 ---
@@ -210,5 +219,5 @@ User Message -> Runner -> Agent -> Flow -> LLM
 3. Agent transfer chains correctly between parent and child agents
 4. Orchestration agents (Sequential, Parallel, Loop) work with escalation and state propagation
 5. All core behaviours have at least one in-memory implementation
-6. Test suite passes (217+), dialyzer clean, credo clean
+6. Test suite passes (240 adk_ex + 21 adk_ex_ecto), dialyzer clean, credo clean
 7. Package publishable to hex.pm with no A2A/HTTP dependencies

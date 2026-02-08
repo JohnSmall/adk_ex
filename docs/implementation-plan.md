@@ -168,17 +168,49 @@ The implementation is organized into 5 phases, each building on the previous. Ea
 
 ---
 
-## Phase 5: Plugins, MCP, and Database Sessions
+## Phase 5: Plugins, Toolsets, and Database Sessions -- COMPLETE
 
-**Goal**: Plugin system, MCP toolset integration, and persistent session storage.
+**Goal**: Plugin system, toolset behaviour, and persistent session storage.
 
 **Dependencies**: Phase 4
 
 ### Tasks
 
-- [ ] **5.1** Implement Plugin system (behaviour + chain execution)
-- [ ] **5.2** Implement MCP toolset integration
-- [ ] **5.3** Implement DatabaseSessionService (Ecto)
+- [x] **5.1** Implement Plugin system (`ADK.Plugin` struct + `ADK.Plugin.Manager`)
+  - Plugin struct with 12 callback fields (on_user_message, on_event, before/after_run, before/after_agent, before/after_model, on_model_error, before/after_tool, on_tool_error)
+  - Manager chains plugins in order, first non-nil wins (short-circuit)
+  - All `run_*` functions accept `nil` as first arg (no-op when no plugin manager)
+  - Plugin name uniqueness validation
+- [x] **5.2** Integrate plugins into Runner, Flow, and LlmAgent
+  - Runner: `plugins` field, creates Manager, calls on_user_message, before/after_run, on_event
+  - Flow: Plugin before/after_model, before/after_tool, on_model_error, on_tool_error
+  - LlmAgent: Plugin before/after_agent (checked before agent callbacks)
+  - InvocationContext: Added `plugin_manager` field
+  - Pattern: Plugins always run first; if plugin short-circuits, agent callbacks are skipped
+- [x] **5.3** Implement Toolset behaviour (`ADK.Tool.Toolset`)
+  - Behaviour with `name/1` and `tools/2` callbacks
+  - LlmAgent: Added `toolsets` field, passes to Flow
+  - Flow: Resolves toolsets in `run_one_step` before building request
+  - Toolset errors logged but don't crash (return empty list for that toolset)
+- [x] **5.4** Add pluggable session dispatch to Runner
+  - Runner: Added `session_module` field (default `ADK.Session.InMemory`)
+  - All session calls dispatch via `runner.session_module.*` instead of hardcoded InMemory
+- [x] **5.5** Implement DatabaseSessionService (`adk_ex_ecto` separate package)
+  - New package at `/workspace/adk_ex_ecto/` (github.com/JohnSmall/adk_ex_ecto)
+  - `ADKExEcto.SessionService` implements `ADK.Session.Service` via Ecto
+  - 4 tables: adk_sessions, adk_events, adk_app_states, adk_user_states
+  - `ADKExEcto.Migration` helper for creating tables
+  - Ecto schemas for Session, Event, AppState, UserState
+  - Full JSON serialization/deserialization for Content, Actions, Parts
+  - State prefix routing (app:/user:/temp:/session) matching InMemory behaviour
+  - Supports SQLite3 (dev/test) and PostgreSQL (prod)
+
+### Verification (all passing)
+- 240 tests, 0 failures (217 Phase 1-4 + 23 Phase 5) in `adk_ex`
+- 21 tests, 0 failures in `adk_ex_ecto`
+- 4 integration tests (Gemini + Claude, excluded by default)
+- Credo: no issues (both packages)
+- Dialyzer: 0 errors (both packages)
 
 ---
 
@@ -197,7 +229,7 @@ Phase 3: Orchestration Agents             <-- COMPLETE
 Phase 4: Memory, Artifacts, Telemetry     <-- COMPLETE
     |
     v
-Phase 5: Plugins, MCP, Database Sessions
+Phase 5: Plugins, Toolsets, DB Sessions   <-- COMPLETE
 ```
 
 Note: A2A protocol is a separate package (`a2a_ex`) that depends on this ADK package.
@@ -223,6 +255,11 @@ Note: A2A protocol is a separate package (`a2a_ex`) that depends on this ADK pac
 | Artifact service | `/workspace/adk-go/artifact/service.go` |
 | Telemetry | `/workspace/adk-go/internal/telemetry/telemetry.go` |
 | A2A server | `/workspace/adk-go/server/adka2a/` |
+| Plugin struct | `/workspace/adk-go/plugin/plugin.go` |
+| Plugin manager | `/workspace/adk-go/internal/plugininternal/plugin_manager.go` |
+| Toolset interface | `/workspace/adk-go/tool/tool.go` |
+| Database session service | `/workspace/adk-go/session/database/service.go` |
+| Database schemas | `/workspace/adk-go/session/database/storage_types.go` |
 
 ---
 

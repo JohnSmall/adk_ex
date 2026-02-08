@@ -11,7 +11,7 @@ Elixir/OTP port of Google's Agent Development Kit (ADK). Standalone `adk_ex` hex
 ```bash
 cd /workspace/adk_ex
 mix deps.get
-mix test          # 217 tests
+mix test          # 240 tests
 mix credo         # Static analysis
 mix dialyzer      # Type checking
 ```
@@ -31,7 +31,7 @@ mix dialyzer      # Type checking
 
 ## Current Status
 
-**Phases 1-4 COMPLETE (217 tests, credo clean, dialyzer clean).**
+**Phases 1-5 COMPLETE (240 tests adk_ex + 21 tests adk_ex_ecto, credo clean, dialyzer clean).**
 
 | Phase | Status | Tests |
 |-------|--------|-------|
@@ -39,7 +39,7 @@ mix dialyzer      # Type checking
 | Phase 2: Runner + Tools + LLM Agent (Model, Flow) | Done | +63 = 138 |
 | Phase 3: Orchestration (Loop/Sequential/Parallel, Transfer) | Done | +30 = 168 |
 | Phase 4: Memory, Artifacts, Telemetry | Done | +49 = 217 |
-| Phase 5: Plugins, MCP, Database Sessions | Next | — |
+| Phase 5: Plugins, Toolsets, Database Sessions | Done | +23 = 240 (+21 adk_ex_ecto) |
 
 ## Module Map
 
@@ -79,13 +79,19 @@ mix dialyzer      # Type checking
 - `ADK.Tool.LoadArtifacts` — Tool: loads artifacts by name
 - `ADK.Telemetry` — Dual telemetry: OpenTelemetry spans + Elixir :telemetry events
 
-## Key Decisions for Phase 5
+### Plugins, Toolsets, Database Sessions (Phase 5)
+- `ADK.Plugin` — Plugin struct with 12 callback fields (Runner/Agent/Model/Tool level hooks)
+- `ADK.Plugin.Manager` — Chains plugins in order, first non-nil wins. All `run_*` accept nil (no-op).
+- `ADK.Tool.Toolset` — Behaviour for dynamic tool providers (`name/1`, `tools/2`)
+- `ADK.Runner` — Now has `plugins` field and `session_module` field (default `ADK.Session.InMemory`) for pluggable session backends
+- `ADK.Agent.InvocationContext` — Now has `plugin_manager` field
 
-- **Database persistence**: Separate `adk_ex_ecto` package (not in core `adk_ex`) — keeps core lightweight, follows `phoenix`/`phoenix_ecto` pattern
-- **Ecto + SQLite (dev/test) + PostgreSQL (prod)**: Matches Go ADK's GORM approach. Same 4-table schema (sessions, events, app_states, user_states)
-- **Plugin system**: Callback-based (matching Go ADK), plugins checked before agent callbacks
-- **MCP integration**: Toolset that bridges MCP servers to ADK tool system
-- **Go ADK reference files for Phase 5**: Database sessions at `/workspace/adk-go/session/database/`, Plugins at `/workspace/adk-go/plugin/`, MCP at `/workspace/adk-go/tool/mcptoolset/`
+### Database Sessions (separate package)
+- **Package**: `adk_ex_ecto` at `/workspace/adk_ex_ecto/` (github.com/JohnSmall/adk_ex_ecto)
+- `ADKExEcto.SessionService` — Implements `ADK.Session.Service` via Ecto
+- `ADKExEcto.Migration` — Creates 4 tables (adk_sessions, adk_events, adk_app_states, adk_user_states)
+- `ADKExEcto.Schemas.*` — Ecto schemas for Session, Event, AppState, UserState
+- Supports SQLite3 (dev/test) and PostgreSQL (prod)
 
 ## Critical Rules
 
@@ -100,19 +106,27 @@ mix dialyzer      # Type checking
 9. **Telemetry events**: Use `[:adk_ex, ...]` prefix (not `[:adk, ...]`) — renamed with hex package
 10. **OTel span testing**: Span name is `elem(span, 6)` (not 2). Must restart `:opentelemetry` app with proper processor config.
 11. **Dialyzer unreachable branches**: If return type is always `{:ok, _}`, don't match `{:error, _}`
+12. **FunctionTool field**: Use `handler:` not `function:` in `FunctionTool.new/1`
+13. **Plugin nil safety**: All `Plugin.Manager.run_*` functions accept `nil` as first arg — no nil checks needed at call sites
+14. **SQLite in-memory testing**: Don't use Ecto sandbox with pool_size 1. Clean tables in setup instead.
 
 ## Architecture Quick Reference
 
 ```
 User Message -> Runner -> Agent -> Flow -> LLM
                   |          |        |       |
+              [plugins]  [plugins] [plugins]  |
                   |          |     [tool calls loop]
                   |          |     [agent transfer]
+                  |          |     [toolset resolution]
                   |          |        |
                [commits events + state to Session]
                   |
                [yields Events to application]
 ```
+
+### Plugin Execution Order
+Plugins run **before** agent callbacks at every hook point. If a plugin returns non-nil, agent callbacks are skipped entirely (short-circuit).
 
 ### Callback Pattern
 All callbacks return `{value | nil, updated_context}`. Nil = continue, non-nil = short-circuit.
