@@ -79,6 +79,14 @@ mix dialyzer      # Type checking
 - `ADK.Tool.LoadArtifacts` — Tool: loads artifacts by name
 - `ADK.Telemetry` — Dual telemetry: OpenTelemetry spans + Elixir :telemetry events
 
+## Key Decisions for Phase 5
+
+- **Database persistence**: Separate `adk_ex_ecto` package (not in core `adk_ex`) — keeps core lightweight, follows `phoenix`/`phoenix_ecto` pattern
+- **Ecto + SQLite (dev/test) + PostgreSQL (prod)**: Matches Go ADK's GORM approach. Same 4-table schema (sessions, events, app_states, user_states)
+- **Plugin system**: Callback-based (matching Go ADK), plugins checked before agent callbacks
+- **MCP integration**: Toolset that bridges MCP servers to ADK tool system
+- **Go ADK reference files for Phase 5**: Database sessions at `/workspace/adk-go/session/database/`, Plugins at `/workspace/adk-go/plugin/`, MCP at `/workspace/adk-go/tool/mcptoolset/`
+
 ## Critical Rules
 
 1. **Compile order**: Define nested/referenced modules BEFORE parent modules in the same file (e.g., `Event.Actions` before `Event`)
@@ -89,6 +97,9 @@ mix dialyzer      # Type checking
 6. **Test module names**: Use unique names to avoid cross-file collisions (e.g., `LoopAgentTest.Helper` not `FakeAgent`)
 7. **All tests async**: Use `async: true` unless shared state requires otherwise
 8. **Verify all changes**: Always run `mix test && mix credo && mix dialyzer`
+9. **Telemetry events**: Use `[:adk_ex, ...]` prefix (not `[:adk, ...]`) — renamed with hex package
+10. **OTel span testing**: Span name is `elem(span, 6)` (not 2). Must restart `:opentelemetry` app with proper processor config.
+11. **Dialyzer unreachable branches**: If return type is always `{:ok, _}`, don't match `{:error, _}`
 
 ## Architecture Quick Reference
 

@@ -269,7 +269,61 @@ Each processor is a function `(InvocationContext, LlmRequest, flow_state) -> {:o
 
 ---
 
-## 9. Testing Strategy
+## 9. Memory Service
+
+### Architecture
+- **Behaviour**: `ADK.Memory.Service` — `add_session/2`, `search/2`
+- **InMemory impl**: GenServer + single ETS table keyed by `{app_name, user_id}`
+- **Search**: Word-based intersection — query words matched against precomputed word maps per entry
+- **Word maps**: `%{word => true}` (not MapSet — dialyzer rule)
+
+### Integration
+- Wired via `InvocationContext.memory_service` (GenServer ref or nil)
+- `CallbackContext.search_memory/2` delegates to memory service
+- `ToolContext.search_memory/2` delegates through CallbackContext
+- `ADK.Tool.LoadMemory` — LLM-callable tool wrapping `search_memory`
+
+---
+
+## 10. Artifact Service
+
+### Architecture
+- **Behaviour**: `ADK.Artifact.Service` — save, load, delete, list, versions
+- **InMemory impl**: GenServer + ETS keyed by `{app_name, user_id, session_id, filename, version}`
+- **Versioning**: Auto-incrementing version on save; load version=0 returns latest
+- **User-scoped**: Filenames starting with `"user:"` stored with `session_id = "user"` (shared across sessions)
+- **Validation**: Rejects filenames containing `/` or `\`
+
+### Integration
+- Wired via `InvocationContext.artifact_service` (GenServer ref or nil)
+- `ToolContext.save_artifact/3` — saves + tracks in `actions.artifact_delta`
+- `ToolContext.load_artifact/2-3`, `list_artifacts/1`
+- `ADK.Tool.LoadArtifacts` — LLM-callable tool wrapping artifact loading
+
+---
+
+## 11. Telemetry
+
+### Dual Emission
+`ADK.Telemetry` emits both OpenTelemetry spans and Elixir `:telemetry` events for each instrumented operation.
+
+### Instrumentation Points (in `ADK.Flow`)
+1. **LLM call** — `span_llm_call/2` wraps `Model.generate_content/3`
+   - OTel span: `"call_llm"` with `gen_ai.*` attributes
+   - Telemetry: `[:adk_ex, :llm, :start | :stop | :exception]`
+2. **Tool call** — `span_tool_call/2` wraps `Tool.run/3`
+   - OTel span: `"execute_tool {name}"` with tool attributes
+   - Telemetry: `[:adk_ex, :tool, :start | :stop | :exception]`
+3. **Merged tools** — `span_merged_tools/1` after parallel tool execution
+   - OTel span: `"execute_tool (merged)"`
+
+### OTel Span Attributes
+- LLM: `gen_ai.system`, `gen_ai.request.model`, `gen_ai.operation.name`, `gcp.vertex.agent.invocation_id`, `gcp.vertex.agent.session_id`
+- Tool: `gen_ai.operation.name`, `gen_ai.tool.name`, `gen_ai.tool.call.id`
+
+---
+
+## 12. Testing Strategy
 
 ### Unit Tests (217 passing)
 - **Phase 1 (75)**: Types, Event, Session/State/InMemory, Agent/CustomAgent/Tree

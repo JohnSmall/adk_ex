@@ -19,7 +19,7 @@ The implementation is organized into 5 phases, each building on the previous. Ea
 
 ### Tasks
 
-- [x] **1.1** Create Mix project at `/workspace/adk` with `--sup`
+- [x] **1.1** Create Mix project at `/workspace/adk_ex` with `--sup`
   - Configured mix.exs with deps: jason, elixir_uuid, ex_doc, dialyxir, credo
 - [x] **1.2** Define core type structs (`lib/adk/types.ex`)
   - `ADK.Types.Content`, `Part`, `FunctionCall`, `FunctionResponse`, `Blob`

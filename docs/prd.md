@@ -194,9 +194,11 @@ User Message -> Runner -> Agent -> Flow -> LLM
 
 - **Elixir version**: >= 1.17
 - **OTP version**: >= 26
-- **Dependencies**: jason, elixir_uuid, req (runtime); ex_doc, dialyxir, credo (dev)
+- **Runtime dependencies**: jason, elixir_uuid, req, opentelemetry_api, telemetry
+- **Dev/test dependencies**: ex_doc, dialyxir, credo, opentelemetry
 - **No GenAI SDK**: Direct REST API calls for LLM providers
 - **No HTTP server deps**: No plug, phoenix, bandit (those belong in a2a_ex)
+- **No Ecto in core**: Database persistence via separate `adk_ex_ecto` package
 - **Testing**: ExUnit, dialyzer, credo
 
 ---
@@ -208,5 +210,5 @@ User Message -> Runner -> Agent -> Flow -> LLM
 3. Agent transfer chains correctly between parent and child agents
 4. Orchestration agents (Sequential, Parallel, Loop) work with escalation and state propagation
 5. All core behaviours have at least one in-memory implementation
-6. Test suite passes (168+), dialyzer clean, credo clean
+6. Test suite passes (217+), dialyzer clean, credo clean
 7. Package publishable to hex.pm with no A2A/HTTP dependencies

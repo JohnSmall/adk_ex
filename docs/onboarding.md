@@ -213,6 +213,14 @@ All callbacks return `{value | nil, updated_context}`. Nil = continue, non-nil =
 | ParallelAgent concurrency | `Task.async` + `Task.await_many` | BEAM lightweight processes |
 | SequentialAgent | LoopAgent(max_iterations=1) | Code reuse, matches Go pattern |
 
+### Package Naming
+
+- **Hex package name**: `adk_ex` (OTP app: `:adk_ex`)
+- **Module names**: `ADK.*` (module prefix is independent of hex name, like `phoenix` uses `Phoenix.*`)
+- **Source paths**: `lib/adk/`, `test/adk/` (unchanged)
+- **Telemetry events**: `[:adk_ex, :llm | :tool, :start | :stop | :exception]`
+- **Database persistence** will be a separate package: `adk_ex_ecto` (keeps core lightweight)
+
 ### Critical Gotchas
 
 1. **Compile order**: Define nested/referenced modules BEFORE parent modules in the same file (e.g., `Event.Actions` before `Event`)
@@ -221,6 +229,8 @@ All callbacks return `{value | nil, updated_context}`. Nil = continue, non-nil =
 4. **Mock model**: Use `Mock.new(responses: [...])` NOT bare `%Mock{}` — needs Agent process for state
 5. **Behaviour dispatch**: `ADK.Agent` has NO module functions — call `agent.__struct__.run(agent, ctx)` or the implementing module directly
 6. **Test module names**: Use unique names to avoid cross-file collisions
+7. **OTel span testing**: Use `otel_simple_processor.set_exporter(:otel_exporter_pid, self())` in setup. Span name is at `elem(span, 6)` (not 2) in the Erlang span record. Must restart opentelemetry app with proper processor config.
+8. **Dialyzer unreachable branches**: If a function always returns `{:ok, _}`, don't pattern match `{:error, _}` — dialyzer flags it
 
 ---
 
@@ -228,7 +238,7 @@ All callbacks return `{value | nil, updated_context}`. Nil = continue, non-nil =
 
 ### Running Tests
 ```bash
-cd /workspace/adk
+cd /workspace/adk_ex
 mix test                                        # Run all unit tests (217)
 mix test test/integration/ --include integration # Run integration tests
 mix test --trace                                 # Run with verbose output
@@ -251,7 +261,7 @@ mix dialyzer                                     # Type checking
 ## 7. Quick Commands
 
 ```bash
-cd /workspace/adk
+cd /workspace/adk_ex
 mix test           # Run tests
 mix credo          # Static analysis
 mix dialyzer       # Type checking
