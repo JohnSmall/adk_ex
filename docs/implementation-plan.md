@@ -2,7 +2,7 @@
 
 ## Document Info
 - **Project**: Elixir ADK
-- **Version**: 0.4.0
+- **Version**: 0.5.0
 - **Date**: 2026-02-08
 
 ---
@@ -158,7 +158,7 @@ The implementation is organized into 5 phases, each building on the previous. Ea
 - [x] **4.5** Implement Telemetry (OpenTelemetry spans + Elixir :telemetry events)
   - `ADK.Telemetry` — dual emission: OTel spans + :telemetry events
   - Instrumented `ADK.Flow`: model calls, tool calls, merged tools
-  - Added deps: `opentelemetry_api ~> 1.4`, `opentelemetry ~> 1.5` (dev/test), `telemetry ~> 1.3`
+  - Added deps: `opentelemetry_api ~> 1.4`, `opentelemetry ~> 1.5`, `telemetry ~> 1.3`
 
 ### Verification (all passing)
 - 217 tests, 0 failures (168 Phase 1-3 + 49 Phase 4)

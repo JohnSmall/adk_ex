@@ -20,7 +20,7 @@ Add `adk_ex` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:adk_ex, "~> 0.1.0"}
+    {:adk_ex, "~> 0.2.0"}
   ]
 end
 ```

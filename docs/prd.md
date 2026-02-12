@@ -2,7 +2,7 @@
 
 ## Document Info
 - **Project**: Elixir ADK - An Elixir/OTP port of Google's Agent Development Kit
-- **Version**: 0.4.0
+- **Version**: 0.5.0
 - **Date**: 2026-02-08
 - **Status**: Phases 1-5 Complete (240 tests adk_ex + 21 tests adk_ex_ecto)
 - **GitHub**: github.com/JohnSmall/adk_ex
@@ -203,8 +203,8 @@ User Message -> Runner -> Agent -> Flow -> LLM
 
 - **Elixir version**: >= 1.17
 - **OTP version**: >= 26
-- **Runtime dependencies**: jason, elixir_uuid, req, opentelemetry_api, telemetry
-- **Dev/test dependencies**: ex_doc, dialyxir, credo, opentelemetry
+- **Runtime dependencies**: jason, elixir_uuid, req, opentelemetry_api, opentelemetry, telemetry
+- **Dev/test dependencies**: ex_doc, dialyxir, credo
 - **No GenAI SDK**: Direct REST API calls for LLM providers
 - **No HTTP server deps**: No plug, phoenix, bandit (those belong in a2a_ex)
 - **No Ecto in core**: Database persistence via separate `adk_ex_ecto` package (github.com/JohnSmall/adk_ex_ecto)

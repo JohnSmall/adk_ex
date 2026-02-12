@@ -97,20 +97,8 @@ defmodule ADK.TelemetryTest do
 
   describe "OpenTelemetry spans" do
     setup do
-      # Configure OTel to use simple processor with PID exporter
-      :application.set_env(:opentelemetry, :traces_exporter, :none)
-
-      :application.set_env(:opentelemetry, :processors, [
-        {:otel_simple_processor, %{exporter: {:otel_exporter_pid, self()}}}
-      ])
-
-      # Restart the application to pick up the new config
-      :application.stop(:opentelemetry)
-      {:ok, _} = :application.ensure_all_started(:opentelemetry)
-
-      # Also set the exporter again with the current test pid after restart
+      # Route spans to the test process (config/test.exs configures otel_simple_processor)
       :otel_simple_processor.set_exporter(:otel_exporter_pid, self())
-
       :ok
     end
 

@@ -4,7 +4,7 @@ defmodule ADK.MixProject do
   def project do
     [
       app: :adk_ex,
-      version: "0.1.0",
+      version: "0.2.0",
       elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -28,7 +28,7 @@ defmodule ADK.MixProject do
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:opentelemetry_api, "~> 1.4"},
-      {:opentelemetry, "~> 1.5", only: [:dev, :test], runtime: false},
+      {:opentelemetry, "~> 1.5"},
       {:telemetry, "~> 1.3"}
     ]
   end

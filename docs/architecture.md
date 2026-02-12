@@ -2,7 +2,7 @@
 
 ## Document Info
 - **Project**: Elixir ADK
-- **Version**: 0.4.0
+- **Version**: 0.5.0
 - **Date**: 2026-02-08
 - **Status**: Phases 1-5 Complete (240 tests adk_ex + 21 tests adk_ex_ecto)
 
