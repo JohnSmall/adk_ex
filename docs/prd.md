@@ -15,7 +15,7 @@ This project ports Google's Agent Development Kit (ADK) to Elixir/OTP. The Googl
 
 The Elixir ADK is a standalone Mix project (hex package: `adk_ex`) that provides idiomatic Elixir equivalents of all core ADK components while leveraging OTP patterns where they naturally fit.
 
-**Note**: The A2A (Agent-to-Agent) protocol is implemented as a separate package, `a2a_ex`, at `/workspace/a2a_ex/`. It depends on this ADK package and adds HTTP server/client layers for agent interoperability.
+**Note**: The A2A (Agent-to-Agent) protocol is implemented as a separate package, `a2a_ex`, at `/workspace/elixir_code/a2a_ex/`. It depends on this ADK package and adds HTTP server/client layers for agent interoperability.
 
 ---
 
@@ -35,7 +35,7 @@ The Elixir ADK is a standalone Mix project (hex package: `adk_ex`) that provides
 - **Behaviours** replace class inheritance with explicit contracts
 
 ### 2.3 Reference Materials
-- **Google ADK Go source** (PRIMARY): `/workspace/adk-go/`
+- **Google ADK Go source** (PRIMARY): `/workspace/samples/adk-go/`
 - **Google ADK Python source**: `/workspace/google-adk-venv/lib/python3.13/site-packages/google/adk/`
 - **Google ADK docs**: https://google.github.io/adk-docs/
 

@@ -12,13 +12,15 @@ We are building an **Elixir/OTP port of Google's Agent Development Kit (ADK)**. 
 
 Google provides the ADK in Python (reference), TypeScript, Go, and Java. We are creating the Elixir implementation.
 
-**Note**: The A2A (Agent-to-Agent) protocol is a separate package at `/workspace/a2a_ex/` (github.com/JohnSmall/a2a_ex). It depends on this ADK package.
+**Note**: The A2A (Agent-to-Agent) protocol is a separate package at `/workspace/elixir_code/a2a_ex/` (github.com/JohnSmall/a2a_ex). It depends on this ADK package via `{:adk_ex, path: "../adk_ex"}`.
+
+**Note**: Example A2A applications are at `/workspace/elixir_code/a2a_ex_examples/`. They demonstrate two-agent cooperation using the A2A protocol (research+report, code+review, data+viz).
 
 ---
 
 ## 2. Current Status
 
-**All 5 phases are COMPLETE.** The project lives at `/workspace/adk_ex/` (github.com/JohnSmall/adk_ex). Database persistence is in a separate package at `/workspace/adk_ex_ecto/` (github.com/JohnSmall/adk_ex_ecto).
+**All 5 phases are COMPLETE.** The project lives at `/workspace/elixir_code/adk_ex/` (github.com/JohnSmall/adk_ex). Database persistence is in a separate package at `/workspace/elixir_code/adk_ex_ecto/` (github.com/JohnSmall/adk_ex_ecto).
 
 ### What's Built
 
@@ -132,17 +134,17 @@ All 5 phases are complete. See `docs/implementation-plan.md` for full details.
 
 | Resource | Location |
 |----------|----------|
-| **This project (Elixir ADK)** | `/workspace/adk_ex/` |
-| **Database sessions (separate package)** | `/workspace/adk_ex_ecto/` |
-| **A2A protocol (separate package)** | `/workspace/a2a_ex/` |
-| **Google ADK Go source (PRIMARY ref)** | `/workspace/adk-go/` |
+| **This project (Elixir ADK)** | `/workspace/elixir_code/adk_ex/` |
+| **Database sessions (separate package)** | `/workspace/elixir_code/adk_ex_ecto/` |
+| **A2A protocol (separate package)** | `/workspace/elixir_code/a2a_ex/` |
+| **Google ADK Go source (PRIMARY ref)** | `/workspace/samples/adk-go/` |
 | **Google ADK Python source** | `/workspace/google-adk-venv/lib/python3.13/site-packages/google/adk/` |
-| **A2A Go SDK** | `/workspace/a2a-go/` |
-| **A2A samples** | `/workspace/a2a-samples/` |
-| **PRD** | `/workspace/adk_ex/docs/prd.md` |
-| **Architecture** | `/workspace/adk_ex/docs/architecture.md` |
-| **Implementation plan** | `/workspace/adk_ex/docs/implementation-plan.md` |
-| **This guide** | `/workspace/adk_ex/docs/onboarding.md` |
+| **A2A Go SDK** | `/workspace/samples/a2a-go/` |
+| **A2A samples** | `/workspace/samples/a2a-samples/` |
+| **PRD** | `/workspace/elixir_code/adk_ex/docs/prd.md` |
+| **Architecture** | `/workspace/elixir_code/adk_ex/docs/architecture.md` |
+| **Implementation plan** | `/workspace/elixir_code/adk_ex/docs/implementation-plan.md` |
+| **This guide** | `/workspace/elixir_code/adk_ex/docs/onboarding.md` |
 
 ### External Documentation
 
@@ -255,7 +257,7 @@ All callbacks return `{value | nil, updated_context}`. Nil = continue, non-nil =
 - **Module names**: `ADK.*` (module prefix is independent of hex name, like `phoenix` uses `Phoenix.*`)
 - **Source paths**: `lib/adk/`, `test/adk/` (unchanged)
 - **Telemetry events**: `[:adk_ex, :llm | :tool, :start | :stop | :exception]`
-- **Database persistence** is a separate package: `adk_ex_ecto` at `/workspace/adk_ex_ecto/` (keeps core lightweight)
+- **Database persistence** is a separate package: `adk_ex_ecto` at `/workspace/elixir_code/adk_ex_ecto/` (keeps core lightweight)
 
 ### Critical Gotchas
 
@@ -270,6 +272,8 @@ All callbacks return `{value | nil, updated_context}`. Nil = continue, non-nil =
 9. **FunctionTool field**: Use `handler:` not `function:` in `FunctionTool.new/1`
 10. **Plugin nil safety**: All `Plugin.Manager.run_*` functions accept `nil` as first arg — no nil checks needed at call sites
 11. **SQLite in-memory testing**: Don't use Ecto sandbox with pool_size 1. Clean tables in setup instead.
+12. **OpenTelemetry dep**: `{:opentelemetry, "~> 1.5"}` must NOT have `only: [:dev, :test]` — it's needed at compile time in all environments (the `require OpenTelemetry.Tracer` in `ADK.Telemetry` needs it).
+13. **Dep name must match app name**: When other projects depend on this package, they must use `{:adk_ex, path: "..."}` (not `{:adk, ...}`). Mix fails to resolve code paths when the dep name doesn't match the app name `:adk_ex`.
 
 ---
 
@@ -277,7 +281,7 @@ All callbacks return `{value | nil, updated_context}`. Nil = continue, non-nil =
 
 ### Running Tests
 ```bash
-cd /workspace/adk_ex
+cd /workspace/elixir_code/adk_ex
 mix test                                        # Run all unit tests (240)
 mix test test/integration/ --include integration # Run integration tests
 mix test --trace                                 # Run with verbose output
@@ -300,7 +304,7 @@ mix dialyzer                                     # Type checking
 ## 7. Quick Commands
 
 ```bash
-cd /workspace/adk_ex
+cd /workspace/elixir_code/adk_ex
 mix test           # Run tests
 mix credo          # Static analysis
 mix dialyzer       # Type checking
@@ -313,6 +317,7 @@ mix clean && mix compile  # Clean build
 ## 8. Key Contacts / Context
 
 - **Project owner**: John Small (jds340@gmail.com)
-- **ADK Elixir project**: `/workspace/adk_ex/` (github.com/JohnSmall/adk_ex)
-- **A2A Elixir project**: `/workspace/a2a_ex/` (github.com/JohnSmall/a2a_ex)
+- **ADK Elixir project**: `/workspace/elixir_code/adk_ex/` (github.com/JohnSmall/adk_ex)
+- **A2A Elixir project**: `/workspace/elixir_code/a2a_ex/` (github.com/JohnSmall/a2a_ex)
+- **A2A Examples**: `/workspace/elixir_code/a2a_ex_examples/` — Example A2A applications
 - **Original AgentHub project**: `/workspace/agent_hub/` (predates ADK alignment)

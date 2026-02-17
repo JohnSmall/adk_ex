@@ -4,12 +4,14 @@
 
 Elixir/OTP port of Google's Agent Development Kit (ADK). Standalone `adk_ex` hex package providing agent orchestration, session management, tool use, and LLM abstraction. Transport-agnostic — no HTTP/Plug dependencies.
 
-**Note**: The A2A (Agent-to-Agent) protocol is a separate package at `/workspace/a2a_ex/` (github.com/JohnSmall/a2a_ex). It depends on this ADK package and adds HTTP server/client layers.
+**Note**: The A2A (Agent-to-Agent) protocol is a separate package at `/workspace/elixir_code/a2a_ex/` (github.com/JohnSmall/a2a_ex). It depends on this ADK package via `{:adk_ex, path: "../adk_ex"}` and adds HTTP server/client layers.
+
+**Note**: Example A2A applications are at `/workspace/elixir_code/a2a_ex_examples/` (research+report, code+review, data+viz).
 
 ## Quick Start
 
 ```bash
-cd /workspace/adk_ex
+cd /workspace/elixir_code/adk_ex
 mix deps.get
 mix test          # 240 tests
 mix credo         # Static analysis
@@ -24,10 +26,10 @@ mix dialyzer      # Type checking
 
 ## Reference Codebases
 
-- **Go ADK (PRIMARY)**: `/workspace/adk-go/` — Read corresponding Go file before implementing any module
+- **Go ADK (PRIMARY)**: `/workspace/samples/adk-go/` — Read corresponding Go file before implementing any module
 - **Python ADK**: `/workspace/google-adk-venv/lib/python3.13/site-packages/google/adk/`
-- **A2A Go SDK**: `/workspace/a2a-go/`
-- **A2A Samples**: `/workspace/a2a-samples/`
+- **A2A Go SDK**: `/workspace/samples/a2a-go/`
+- **A2A Samples**: `/workspace/samples/a2a-samples/`
 
 ## Current Status
 
@@ -87,7 +89,7 @@ mix dialyzer      # Type checking
 - `ADK.Agent.InvocationContext` — Now has `plugin_manager` field
 
 ### Database Sessions (separate package)
-- **Package**: `adk_ex_ecto` at `/workspace/adk_ex_ecto/` (github.com/JohnSmall/adk_ex_ecto)
+- **Package**: `adk_ex_ecto` at `/workspace/elixir_code/adk_ex_ecto/` (github.com/JohnSmall/adk_ex_ecto)
 - `ADKExEcto.SessionService` — Implements `ADK.Session.Service` via Ecto
 - `ADKExEcto.Migration` — Creates 4 tables (adk_sessions, adk_events, adk_app_states, adk_user_states)
 - `ADKExEcto.Schemas.*` — Ecto schemas for Session, Event, AppState, UserState
@@ -109,6 +111,8 @@ mix dialyzer      # Type checking
 12. **FunctionTool field**: Use `handler:` not `function:` in `FunctionTool.new/1`
 13. **Plugin nil safety**: All `Plugin.Manager.run_*` functions accept `nil` as first arg — no nil checks needed at call sites
 14. **SQLite in-memory testing**: Don't use Ecto sandbox with pool_size 1. Clean tables in setup instead.
+15. **OpenTelemetry dep**: `{:opentelemetry, "~> 1.5"}` must NOT have `only: [:dev, :test]` — needed at compile time in all environments.
+16. **Dep name must match app name**: Downstream projects must use `{:adk_ex, path: "..."}` (not `{:adk, ...}`). Mix fails when dep name != app name.
 
 ## Architecture Quick Reference
 

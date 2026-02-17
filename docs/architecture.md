@@ -149,7 +149,7 @@ lib/adk/
 ### Database Sessions (separate package: `adk_ex_ecto`)
 
 ```
-/workspace/adk_ex_ecto/
+/workspace/elixir_code/adk_ex_ecto/
   lib/adk_ex_ecto/
     session_service.ex               # Implements ADK.Session.Service via Ecto
     migration.ex                     # Creates 4 tables with composite PKs
