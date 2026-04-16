@@ -137,3 +137,20 @@ All callbacks return `{value | nil, updated_context}`. Nil = continue, non-nil =
 
 ### State Prefixes
 - `(none)` = session-local, `app:` = cross-session, `user:` = cross-user-session, `temp:` = invocation-only
+
+## Publishing to Hex
+
+The package is published to hex.pm as `adk_ex`.
+
+### Version Bump Procedure
+1. Update `@version` in `mix.exs`
+2. Add a new section to `CHANGELOG.md` with the version and date
+3. Run `mix test && mix credo && mix dialyzer` to verify
+4. Run `mix hex.build` to inspect the tarball
+5. Run `mix hex.publish` to publish (requires `mix hex.user auth`)
+
+### Important Notes
+- `CHANGELOG.md` must be updated before every release
+- `usage-rules.md` and `usage-rules/` must remain in the `:files` list in `package/0`
+- The `:description` and `:package` metadata in `mix.exs` are required for hex.pm
+- After publishing, downstream projects can use `{:adk_ex, "~> 0.2"}` instead of path refs

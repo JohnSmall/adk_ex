@@ -19,7 +19,7 @@ The implementation is organized into 5 phases, each building on the previous. Ea
 
 ### Tasks
 
-- [x] **1.1** Create Mix project at `/workspace/elixir_code/adk_ex` with `--sup`
+- [x] **1.1** Create Mix project with `--sup`
   - Configured mix.exs with deps: jason, elixir_uuid, ex_doc, dialyxir, credo
 - [x] **1.2** Define core type structs (`lib/adk/types.ex`)
   - `ADK.Types.Content`, `Part`, `FunctionCall`, `FunctionResponse`, `Blob`
@@ -136,7 +136,7 @@ The implementation is organized into 5 phases, each building on the previous. Ea
 
 **Dependencies**: Phase 3
 
-**Note**: A2A protocol implementation has been extracted to a separate package at `/workspace/elixir_code/a2a_ex/` (github.com/JohnSmall/a2a_ex).
+**Note**: A2A protocol implementation has been extracted to a separate package at [github.com/JohnSmall/a2a_ex](https://github.com/JohnSmall/a2a_ex).
 
 ### Tasks
 
@@ -196,7 +196,7 @@ The implementation is organized into 5 phases, each building on the previous. Ea
   - Runner: Added `session_module` field (default `ADK.Session.InMemory`)
   - All session calls dispatch via `runner.session_module.*` instead of hardcoded InMemory
 - [x] **5.5** Implement DatabaseSessionService (`adk_ex_ecto` separate package)
-  - New package at `/workspace/elixir_code/adk_ex_ecto/` (github.com/JohnSmall/adk_ex_ecto)
+  - New package at [github.com/JohnSmall/adk_ex_ecto](https://github.com/JohnSmall/adk_ex_ecto)
   - `ADKExEcto.SessionService` implements `ADK.Session.Service` via Ecto
   - 4 tables: adk_sessions, adk_events, adk_app_states, adk_user_states
   - `ADKExEcto.Migration` helper for creating tables
@@ -238,28 +238,30 @@ Note: A2A protocol is a separate package (`a2a_ex`) that depends on this ADK pac
 
 ## Key Reference Files (Go ADK)
 
-| ADK Component | Go Source File |
+The Go ADK source is at [github.com/google/adk-go](https://github.com/google/adk-go).
+
+| ADK Component | Go Source Path |
 |---------------|----------------|
-| Agent interface | `/workspace/samples/adk-go/agent/agent.go` |
-| Agent contexts | `/workspace/samples/adk-go/agent/context.go` |
-| RunConfig | `/workspace/samples/adk-go/agent/run_config.go` |
-| Session/Event structs | `/workspace/samples/adk-go/session/session.go` |
-| Session service | `/workspace/samples/adk-go/session/service.go` |
-| InMemory sessions | `/workspace/samples/adk-go/session/inmemory.go` |
-| State utilities | `/workspace/samples/adk-go/internal/sessionutils/utils.go` |
-| Runner | `/workspace/samples/adk-go/runner/runner.go` |
-| LLM Agent | `/workspace/samples/adk-go/agent/llm_agent.go` |
-| Flow | `/workspace/samples/adk-go/agent/flow.go` |
-| Tool interface | `/workspace/samples/adk-go/tool/tool.go` |
-| Memory service | `/workspace/samples/adk-go/memory/service.go` |
-| Artifact service | `/workspace/samples/adk-go/artifact/service.go` |
-| Telemetry | `/workspace/samples/adk-go/internal/telemetry/telemetry.go` |
-| A2A server | `/workspace/samples/adk-go/server/adka2a/` |
-| Plugin struct | `/workspace/samples/adk-go/plugin/plugin.go` |
-| Plugin manager | `/workspace/samples/adk-go/internal/plugininternal/plugin_manager.go` |
-| Toolset interface | `/workspace/samples/adk-go/tool/tool.go` |
-| Database session service | `/workspace/samples/adk-go/session/database/service.go` |
-| Database schemas | `/workspace/samples/adk-go/session/database/storage_types.go` |
+| Agent interface | `agent/agent.go` |
+| Agent contexts | `agent/context.go` |
+| RunConfig | `agent/run_config.go` |
+| Session/Event structs | `session/session.go` |
+| Session service | `session/service.go` |
+| InMemory sessions | `session/inmemory.go` |
+| State utilities | `internal/sessionutils/utils.go` |
+| Runner | `runner/runner.go` |
+| LLM Agent | `agent/llm_agent.go` |
+| Flow | `agent/flow.go` |
+| Tool interface | `tool/tool.go` |
+| Memory service | `memory/service.go` |
+| Artifact service | `artifact/service.go` |
+| Telemetry | `internal/telemetry/telemetry.go` |
+| A2A server | `server/adka2a/` |
+| Plugin struct | `plugin/plugin.go` |
+| Plugin manager | `internal/plugininternal/plugin_manager.go` |
+| Toolset interface | `tool/tool.go` |
+| Database session service | `session/database/service.go` |
+| Database schemas | `session/database/storage_types.go` |
 
 ---
 

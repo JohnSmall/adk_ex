@@ -146,10 +146,10 @@ lib/adk/
     toolset.ex                       # Toolset behaviour (name/1, tools/2)
 ```
 
-### Database Sessions (separate package: `adk_ex_ecto`)
+### Database Sessions (separate package: [`adk_ex_ecto`](https://github.com/JohnSmall/adk_ex_ecto))
 
 ```
-/workspace/elixir_code/adk_ex_ecto/
+adk_ex_ecto/
   lib/adk_ex_ecto/
     session_service.ex               # Implements ADK.Session.Service via Ecto
     migration.ex                     # Creates 4 tables with composite PKs

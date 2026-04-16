@@ -12,15 +12,15 @@ We are building an **Elixir/OTP port of Google's Agent Development Kit (ADK)**. 
 
 Google provides the ADK in Python (reference), TypeScript, Go, and Java. We are creating the Elixir implementation.
 
-**Note**: The A2A (Agent-to-Agent) protocol is a separate package at `/workspace/elixir_code/a2a_ex/` (github.com/JohnSmall/a2a_ex). It depends on this ADK package via `{:adk_ex, path: "../adk_ex"}`.
+**Note**: The A2A (Agent-to-Agent) protocol is a separate package at [github.com/JohnSmall/a2a_ex](https://github.com/JohnSmall/a2a_ex). It depends on this ADK package via `{:adk_ex, "~> 0.2"}`.
 
-**Note**: Example A2A applications are at `/workspace/elixir_code/a2a_ex_examples/`. They demonstrate two-agent cooperation using the A2A protocol (research+report, code+review, data+viz).
+**Note**: Example A2A applications are at [github.com/JohnSmall/a2a_ex_examples](https://github.com/JohnSmall/a2a_ex_examples). They demonstrate two-agent cooperation using the A2A protocol (research+report, code+review, data+viz).
 
 ---
 
 ## 2. Current Status
 
-**All 5 phases are COMPLETE.** The project lives at `/workspace/elixir_code/adk_ex/` (github.com/JohnSmall/adk_ex). Database persistence is in a separate package at `/workspace/elixir_code/adk_ex_ecto/` (github.com/JohnSmall/adk_ex_ecto).
+**All 5 phases are COMPLETE.** The project lives at [github.com/JohnSmall/adk_ex](https://github.com/JohnSmall/adk_ex). Database persistence is in a separate package at [github.com/JohnSmall/adk_ex_ecto](https://github.com/JohnSmall/adk_ex_ecto).
 
 ### What's Built
 
@@ -130,21 +130,21 @@ All 5 phases are complete. See `docs/implementation-plan.md` for full details.
 
 ## 3. Key Resources
 
-### Local Files
+### Project Resources
 
 | Resource | Location |
 |----------|----------|
-| **This project (Elixir ADK)** | `/workspace/elixir_code/adk_ex/` |
-| **Database sessions (separate package)** | `/workspace/elixir_code/adk_ex_ecto/` |
-| **A2A protocol (separate package)** | `/workspace/elixir_code/a2a_ex/` |
-| **Google ADK Go source (PRIMARY ref)** | `/workspace/samples/adk-go/` |
-| **Google ADK Python source** | `/workspace/google-adk-venv/lib/python3.13/site-packages/google/adk/` |
-| **A2A Go SDK** | `/workspace/samples/a2a-go/` |
-| **A2A samples** | `/workspace/samples/a2a-samples/` |
-| **PRD** | `/workspace/elixir_code/adk_ex/docs/prd.md` |
-| **Architecture** | `/workspace/elixir_code/adk_ex/docs/architecture.md` |
-| **Implementation plan** | `/workspace/elixir_code/adk_ex/docs/implementation-plan.md` |
-| **This guide** | `/workspace/elixir_code/adk_ex/docs/onboarding.md` |
+| **This project (Elixir ADK)** | [github.com/JohnSmall/adk_ex](https://github.com/JohnSmall/adk_ex) |
+| **Database sessions (separate package)** | [github.com/JohnSmall/adk_ex_ecto](https://github.com/JohnSmall/adk_ex_ecto) |
+| **A2A protocol (separate package)** | [github.com/JohnSmall/a2a_ex](https://github.com/JohnSmall/a2a_ex) |
+| **Google ADK Go source (PRIMARY ref)** | [github.com/google/adk-go](https://github.com/google/adk-go) |
+| **Google ADK Python source** | [pypi.org/project/google-adk](https://pypi.org/project/google-adk/) |
+| **A2A Go SDK** | [github.com/a2aproject/a2a-go](https://github.com/a2aproject/a2a-go) |
+| **A2A samples** | [github.com/a2aproject/a2a-samples](https://github.com/a2aproject/a2a-samples) |
+| **PRD** | `docs/prd.md` |
+| **Architecture** | `docs/architecture.md` |
+| **Implementation plan** | `docs/implementation-plan.md` |
+| **This guide** | `docs/onboarding.md` |
 
 ### External Documentation
 
@@ -257,7 +257,7 @@ All callbacks return `{value | nil, updated_context}`. Nil = continue, non-nil =
 - **Module names**: `ADK.*` (module prefix is independent of hex name, like `phoenix` uses `Phoenix.*`)
 - **Source paths**: `lib/adk/`, `test/adk/` (unchanged)
 - **Telemetry events**: `[:adk_ex, :llm | :tool, :start | :stop | :exception]`
-- **Database persistence** is a separate package: `adk_ex_ecto` at `/workspace/elixir_code/adk_ex_ecto/` (keeps core lightweight)
+- **Database persistence** is a separate package: [`adk_ex_ecto`](https://github.com/JohnSmall/adk_ex_ecto) (keeps core lightweight)
 
 ### Critical Gotchas
 
@@ -281,7 +281,6 @@ All callbacks return `{value | nil, updated_context}`. Nil = continue, non-nil =
 
 ### Running Tests
 ```bash
-cd /workspace/elixir_code/adk_ex
 mix test                                        # Run all unit tests (240)
 mix test test/integration/ --include integration # Run integration tests
 mix test --trace                                 # Run with verbose output
@@ -304,7 +303,6 @@ mix dialyzer                                     # Type checking
 ## 7. Quick Commands
 
 ```bash
-cd /workspace/elixir_code/adk_ex
 mix test           # Run tests
 mix credo          # Static analysis
 mix dialyzer       # Type checking
@@ -317,7 +315,6 @@ mix clean && mix compile  # Clean build
 ## 8. Key Contacts / Context
 
 - **Project owner**: John Small (jds340@gmail.com)
-- **ADK Elixir project**: `/workspace/elixir_code/adk_ex/` (github.com/JohnSmall/adk_ex)
-- **A2A Elixir project**: `/workspace/elixir_code/a2a_ex/` (github.com/JohnSmall/a2a_ex)
-- **A2A Examples**: `/workspace/elixir_code/a2a_ex_examples/` — Example A2A applications
-- **Original AgentHub project**: `/workspace/agent_hub/` (predates ADK alignment)
+- **ADK Elixir project**: [github.com/JohnSmall/adk_ex](https://github.com/JohnSmall/adk_ex)
+- **A2A Elixir project**: [github.com/JohnSmall/a2a_ex](https://github.com/JohnSmall/a2a_ex)
+- **A2A Examples**: [github.com/JohnSmall/a2a_ex_examples](https://github.com/JohnSmall/a2a_ex_examples)
