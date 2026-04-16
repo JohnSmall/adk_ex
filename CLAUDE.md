@@ -153,4 +153,4 @@ The package is published to hex.pm as `adk_ex`.
 - `CHANGELOG.md` must be updated before every release
 - `usage-rules.md` and `usage-rules/` must remain in the `:files` list in `package/0`
 - The `:description` and `:package` metadata in `mix.exs` are required for hex.pm
-- After publishing, downstream projects can use `{:adk_ex, "~> 0.2"}` instead of path refs
+- After publishing, downstream projects can use `{:adk_ex, "~> 1.0"}` instead of path refs

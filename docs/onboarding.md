@@ -12,7 +12,7 @@ We are building an **Elixir/OTP port of Google's Agent Development Kit (ADK)**. 
 
 Google provides the ADK in Python (reference), TypeScript, Go, and Java. We are creating the Elixir implementation.
 
-**Note**: The A2A (Agent-to-Agent) protocol is a separate package at [github.com/JohnSmall/a2a_ex](https://github.com/JohnSmall/a2a_ex). It depends on this ADK package via `{:adk_ex, "~> 0.2"}`.
+**Note**: The A2A (Agent-to-Agent) protocol is a separate package at [github.com/JohnSmall/a2a_ex](https://github.com/JohnSmall/a2a_ex). It depends on this ADK package via `{:adk_ex, "~> 1.0"}`.
 
 **Note**: Example A2A applications are at [github.com/JohnSmall/a2a_ex_examples](https://github.com/JohnSmall/a2a_ex_examples). They demonstrate two-agent cooperation using the A2A protocol (research+report, code+review, data+viz).
 
