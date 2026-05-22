@@ -1,7 +1,7 @@
 defmodule ADK.MixProject do
   use Mix.Project
 
-  @version "1.0.0"
+  @version "1.1.0"
   @source_url "https://github.com/JohnSmall/adk_ex"
 
   def project do
@@ -110,6 +110,7 @@ defmodule ADK.MixProject do
           ADK.Model.Mock,
           ADK.Model.Gemini,
           ADK.Model.Claude,
+          ADK.Model.LiteLlm,
           ADK.Model.Registry
         ],
         Flow: [

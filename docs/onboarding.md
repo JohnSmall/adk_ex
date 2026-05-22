@@ -58,6 +58,7 @@ Google provides the ADK in Python (reference), TypeScript, Go, and Java. We are 
 | `ADK.Model.Mock` | Stateful mock model via Agent process | `lib/adk/model/mock.ex` |
 | `ADK.Model.Gemini` | Gemini REST API provider (Req) | `lib/adk/model/gemini.ex` |
 | `ADK.Model.Claude` | Claude/Anthropic REST API provider (Req) | `lib/adk/model/claude.ex` |
+| `ADK.Model.LiteLlm` | OpenAI-compatible provider (OpenAI, LiteLLM proxy, Groq, Ollama, etc.) | `lib/adk/model/lite_llm.ex` |
 | `ADK.Model.Registry` | Model name -> provider resolution | `lib/adk/model/registry.ex` |
 | `ADK.Tool` | Tool behaviour + module-level dispatch | `lib/adk/tool.ex` |
 | `ADK.Tool.Context` | Tool context with 3-level state delegation | `lib/adk/tool/context.ex` |
@@ -119,7 +120,7 @@ Google provides the ADK in Python (reference), TypeScript, Go, and Java. We are 
 ### Test Coverage
 - **adk_ex**: 240 tests passing (75 + 63 + 30 + 49 + 23)
 - **adk_ex_ecto**: 21 tests passing
-- 4 integration tests (Gemini + Claude, excluded by default)
+- 6 integration tests (Gemini + Claude + OpenAI, excluded by default)
 - Credo: clean (both packages)
 - Dialyzer: clean (both packages)
 
@@ -188,7 +189,7 @@ Runner.run/5
         |     |-- Build LlmRequest via 5 processors:
         |     |     Basic -> ToolProcessor -> Instructions -> AgentTransfer -> Contents
         |     |-- [plugin: before_model] -> [before_model_callbacks] (may short-circuit)
-        |     |-- Model.generate_content/3 (Gemini/Claude/Mock)
+        |     |-- Model.generate_content/3 (Gemini/Claude/LiteLlm/Mock)
         |     |-- [plugin: after_model] -> [after_model_callbacks] (may replace)
         |     |-- If function_calls in response:
         |     |     [plugin: before_tool] -> [before_tool] -> Tool.run/3

@@ -28,8 +28,7 @@ defmodule ADK.Tool.TransferToAgent do
   def declaration(%__MODULE__{}) do
     %{
       "name" => "transfer_to_agent",
-      "description" =>
-        "Transfer the conversation to another agent. Use this when the user's request is better handled by a different agent.",
+      "description" => "Transfer the conversation to another agent. Use this when the user's request is better handled by a different agent.",
       "parameters" => %{
         "type" => "object",
         "properties" => %{

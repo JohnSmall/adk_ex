@@ -46,7 +46,7 @@ The Elixir ADK is a standalone Mix project (hex package: `adk_ex`) that provides
 ### 3.1 Goals
 1. **Feature parity with Google ADK core** - All agent types, runner, session, event, tool, and callback systems
 2. **Idiomatic Elixir** - Use OTP patterns, behaviours, and conventions
-3. **Multi-LLM support** - Gemini (primary), Claude (Anthropic), and extensible via behaviour
+3. **Multi-LLM support** - Gemini (primary), Claude (Anthropic), OpenAI (via LiteLlm — GPT-4o/GPT-4/o1/o3, plus any OpenAI-compatible endpoint or LiteLLM proxy for 100+ providers), and extensible via behaviour
 4. **Production-ready services** - In-memory + persistent implementations for sessions, artifacts, memory
 5. **Comprehensive testing** - Unit tests, integration tests, dialyzer, credo
 6. **Hex-publishable** - Standalone package with no A2A or HTTP dependencies
@@ -97,6 +97,7 @@ User Message -> Runner -> Agent -> Flow -> LLM
 | Mock model | `ADK.Model.Mock` | Done (Phase 2) |
 | Gemini provider | `ADK.Model.Gemini` | Done (Phase 2) |
 | Claude provider | `ADK.Model.Claude` | Done (Phase 2) |
+| LiteLlm provider (OpenAI + OpenAI-compatible) | `ADK.Model.LiteLlm` | Done (v1.1) |
 | Model Registry | `ADK.Model.Registry` | Done (Phase 2) |
 | Tool behaviour | `ADK.Tool` | Done (Phase 2) |
 | Tool Context | `ADK.Tool.Context` | Done (Phase 2) |
@@ -187,6 +188,7 @@ User Message -> Runner -> Agent -> Flow -> LLM
 - Model behaviour: name/1, generate_content/3 returning Enumerable of LlmResponse
 - Gemini provider via REST API (Req)
 - Claude provider via REST API (Req)
+- LiteLlm provider: OpenAI Chat Completions wire format via Req; compatible with OpenAI, LiteLLM proxy, and any OpenAI-compatible endpoint
 - Model Registry for name-based resolution
 - Mock model with stateful sequential responses (Agent process)
 
@@ -214,7 +216,7 @@ User Message -> Runner -> Agent -> Flow -> LLM
 
 ## 7. Success Criteria
 
-1. All agent types work with real LLM providers (Gemini, Claude)
+1. All agent types work with real LLM providers (Gemini, Claude, OpenAI via LiteLlm)
 2. Sessions persist and restore across runner invocations
 3. Agent transfer chains correctly between parent and child agents
 4. Orchestration agents (Sequential, Parallel, Loop) work with escalation and state propagation

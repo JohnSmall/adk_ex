@@ -88,8 +88,7 @@ defmodule ADK.TelemetryTest do
 
       assert result == :tool_result
 
-      assert_receive {^ref, [:adk_ex, :tool, :start], %{system_time: _},
-                      %{tool_name: "get_weather"}}
+      assert_receive {^ref, [:adk_ex, :tool, :start], %{system_time: _}, %{tool_name: "get_weather"}}
 
       assert_receive {^ref, [:adk_ex, :tool, :stop], %{duration: _}, %{tool_name: "get_weather"}}
     end

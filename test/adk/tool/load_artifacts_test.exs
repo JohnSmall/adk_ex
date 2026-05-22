@@ -58,15 +58,9 @@ defmodule ADK.Tool.LoadArtifactsTest do
   test "loads multiple artifacts" do
     art = setup_artifact()
 
-    ArtifactService.save(art,
-      app_name: "test", user_id: "u1", session_id: "s1",
-      filename: "a.txt", part: Part.new_text("aaa")
-    )
+    ArtifactService.save(art, app_name: "test", user_id: "u1", session_id: "s1", filename: "a.txt", part: Part.new_text("aaa"))
 
-    ArtifactService.save(art,
-      app_name: "test", user_id: "u1", session_id: "s1",
-      filename: "b.txt", part: Part.new_text("bbb")
-    )
+    ArtifactService.save(art, app_name: "test", user_id: "u1", session_id: "s1", filename: "b.txt", part: Part.new_text("bbb"))
 
     tool_ctx = make_tool_ctx(art)
     tool = %LoadArtifacts{}

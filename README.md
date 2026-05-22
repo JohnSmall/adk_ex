@@ -10,7 +10,7 @@ Elixir/OTP port of [Google's Agent Development Kit (ADK)](https://google.github.
 
 - **Agent types**: LLM agents, Sequential, Parallel, Loop, and Custom agents
 - **Tool system**: Function tools, agent transfer, memory search, artifact loading
-- **Multi-LLM**: Gemini and Claude providers via REST API, extensible via behaviour
+- **Multi-LLM**: Gemini, Claude, DeepSeek, and OpenAI (plus any OpenAI-compatible endpoint or LiteLLM proxy for 100+ providers), extensible via behaviour
 - **Session management**: Prefix-scoped state (session/app/user/temp) with GenServer + ETS
 - **Memory service**: Cross-session knowledge with word-based search
 - **Artifact service**: Versioned file storage with user-scoped sharing
@@ -62,6 +62,39 @@ events =
   runner
   |> ADK.Runner.run("user-1", "session-1", ADK.Types.Content.new_from_text("user", "What's the weather in Paris?"))
   |> Enum.to_list()
+```
+
+## Using OpenAI (and other providers via LiteLLM)
+
+Mirrors Google's Python ADK `LiteLlm(model="openai/gpt-4o")` pattern. `ADK.Model.LiteLlm` speaks the OpenAI Chat Completions wire format, which is also what the [LiteLLM proxy](https://docs.litellm.ai/) emulates for 100+ providers.
+
+```elixir
+# Direct OpenAI
+model = %ADK.Model.LiteLlm{
+  model_name: "gpt-4o",
+  api_key: System.fetch_env!("OPENAI_API_KEY"),
+  base_url: "https://api.openai.com/v1"
+}
+
+# Or via the registry:
+{:ok, model} = ADK.Model.Registry.resolve("gpt-4o", api_key: api_key)
+
+# Through a LiteLLM proxy (multi-provider routing):
+model = %ADK.Model.LiteLlm{
+  model_name: "anthropic/claude-3-5-sonnet-20241022",
+  api_key: "sk-litellm-master-key",
+  base_url: "http://localhost:4000"
+}
+```
+
+See [`examples/openai.exs`](https://github.com/JohnSmall/adk_ex/blob/main/examples/openai.exs) for a complete runnable example.
+
+## Using DeepSeek
+
+DeepSeek's Anthropic-compatible API is supported via the registry:
+
+```elixir
+{:ok, model} = ADK.Model.Registry.resolve("deepseek-v4-pro", api_key: api_key)
 ```
 
 ## Documentation

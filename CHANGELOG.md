@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-04-21
+
+### Added
+
+- `ADK.Model.LiteLlm` provider — generic OpenAI-compatible client that mirrors
+  Google Python ADK's `LiteLlm(model="openai/gpt-4o")` pattern. Speaks the
+  OpenAI Chat Completions wire format, so it works against OpenAI directly,
+  a [LiteLLM proxy](https://docs.litellm.ai/) (which fronts 100+ providers
+  under the same protocol), or any OpenAI-compatible endpoint (Groq, Together,
+  OpenRouter, Ollama, vLLM, Azure OpenAI, LM Studio, etc.). Full function
+  calling support via the `tools` parameter.
+- `ADK.Model.Registry` now resolves `gpt-*`, `o1*`, and `o3*` model names to
+  `LiteLlm` configured for OpenAI, resolves any slash-namespaced model
+  name (e.g. `"openai/gpt-4o"`, `"anthropic/claude-3-5-sonnet-20241022"`) to
+  `LiteLlm` for LiteLLM-proxy routing (requires `:base_url`), and resolves
+  `deepseek-*` model names to `Claude` configured for DeepSeek's
+  Anthropic-compatible endpoint (`base_url: "https://api.deepseek.com/anthropic/v1"`).
+- `test/adk/model/lite_llm_test.exs` — 21 unit tests covering request
+  serialization, tool handling, config passthrough, and response parsing.
+- `test/adk/model/registry_test.exs` — 15 unit tests covering all provider
+  prefixes (Gemini, Claude, DeepSeek, OpenAI, LiteLLM proxy, unknown).
+- `test/integration/openai_test.exs` — 2 integration tests against OpenAI
+  (excluded by default; run with `OPENAI_API_KEY` set).
+- `examples/openai.exs` — runnable example showing OpenAI via `LiteLlm`.
+- `usage-rules/models.md` — LLM usage rule for provider selection and the
+  LiteLLM pattern.
+
+### Changed
+
+- Docs (README, CLAUDE.md, architecture, onboarding, PRD, implementation plan,
+  usage rules) updated to list OpenAI and DeepSeek alongside Gemini and Claude.
+
 ## [1.0.0] - 2026-04-16
 
 First public release on hex.pm.

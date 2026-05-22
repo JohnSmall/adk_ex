@@ -10,8 +10,7 @@ defmodule ADK.FlowTest do
   alias ADK.Types.{Content, FunctionCall, Part}
 
   defmodule TestAgent do
-    defstruct name: "flow-agent", generate_content_config: %{}, include_contents: :default,
-              instruction: "", global_instruction: ""
+    defstruct name: "flow-agent", generate_content_config: %{}, include_contents: :default, instruction: "", global_instruction: ""
 
     def name(%__MODULE__{name: n}), do: n
     def description(_), do: ""

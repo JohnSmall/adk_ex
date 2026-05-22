@@ -76,8 +76,11 @@ The implementation is organized into 5 phases, each building on the previous. Ea
 - [x] **2.6** Implement Claude provider (`lib/adk/model/claude.ex`)
   - REST API calls via Req to api.anthropic.com
   - ADK types ↔ Claude format conversion (tool_use/tool_result blocks)
+- [x] **2.6b** Implement LiteLlm provider (`lib/adk/model/lite_llm.ex`) — added in v1.1
+  - OpenAI Chat Completions wire format via Req; configurable base_url
+  - Covers OpenAI direct, LiteLLM proxy, and any OpenAI-compatible endpoint
 - [x] **2.7** Implement Model Registry (`lib/adk/model/registry.ex`)
-  - Pattern matching: gemini-* → Gemini, claude-* → Claude
+  - Pattern matching: gemini-* → Gemini, claude-* → Claude, gpt-*/o1*/o3* → LiteLlm@OpenAI, provider/model → LiteLlm
 - [x] **2.8** Implement Flow engine (`lib/adk/flow.ex`)
   - Stream.resource/3 state machine with max 25 iterations
   - 4 request processors: Basic, ToolProcessor, Instructions, Contents
@@ -94,7 +97,7 @@ The implementation is organized into 5 phases, each building on the previous. Ea
 
 ### Verification (all passing)
 - 138 tests, 0 failures (75 Phase 1 + 63 Phase 2)
-- 4 integration tests (Gemini + Claude, excluded by default)
+- 6 integration tests (Gemini + Claude + OpenAI, excluded by default)
 - Credo: no issues
 - Dialyzer: 0 errors
 
@@ -124,7 +127,7 @@ The implementation is organized into 5 phases, each building on the previous. Ea
 
 ### Verification (all passing)
 - 168 tests, 0 failures (75 Phase 1 + 63 Phase 2 + 30 Phase 3)
-- 4 integration tests (Gemini + Claude, excluded by default)
+- 6 integration tests (Gemini + Claude + OpenAI, excluded by default)
 - Credo: no issues
 - Dialyzer: 0 errors
 
@@ -162,7 +165,7 @@ The implementation is organized into 5 phases, each building on the previous. Ea
 
 ### Verification (all passing)
 - 217 tests, 0 failures (168 Phase 1-3 + 49 Phase 4)
-- 4 integration tests (Gemini + Claude, excluded by default)
+- 6 integration tests (Gemini + Claude + OpenAI, excluded by default)
 - Credo: no issues
 - Dialyzer: 0 errors
 
@@ -208,7 +211,7 @@ The implementation is organized into 5 phases, each building on the previous. Ea
 ### Verification (all passing)
 - 240 tests, 0 failures (217 Phase 1-4 + 23 Phase 5) in `adk_ex`
 - 21 tests, 0 failures in `adk_ex_ecto`
-- 4 integration tests (Gemini + Claude, excluded by default)
+- 6 integration tests (Gemini + Claude + OpenAI, excluded by default)
 - Credo: no issues (both packages)
 - Dialyzer: 0 errors (both packages)
 

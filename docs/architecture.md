@@ -37,7 +37,7 @@ ADK.Runner.run/5
      |         |         |
      |         |         +--> [plugin: before_model] (may short-circuit)
      |         |         +--> [before_model_callbacks] (may short-circuit)
-     |         |         +--> Model.generate_content/3 (Gemini/Claude/Mock)
+     |         |         +--> Model.generate_content/3 (Gemini/Claude/LiteLlm/Mock)
      |         |         +--> [plugin: after_model] (may replace)
      |         |         +--> [after_model_callbacks] (may replace)
      |         |         |
@@ -98,6 +98,7 @@ lib/adk/
     mock.ex                          # Mock model (stateful via Agent process, Mock.new/1)
     gemini.ex                        # Gemini REST provider (Req)
     claude.ex                        # Claude REST provider (Req)
+    lite_llm.ex                      # OpenAI-compatible provider: OpenAI, LiteLLM proxy, or any compatible endpoint
     registry.ex                      # Model name -> provider resolution
   tool.ex                            # Tool behaviour (name, description, declaration, run, long_running?)
   tool/
@@ -300,6 +301,16 @@ Each processor is a function `(InvocationContext, LlmRequest, flow_state) -> {:o
 - POST to `{base_url}/messages` with `x-api-key` header
 - Converts ADK types to Claude format (tool_use/tool_result content blocks)
 - System instruction as top-level `system` field (not in messages)
+
+### LiteLlm (`ADK.Model.LiteLlm`)
+- Mirrors Google Python ADK's `LiteLlm(model="openai/gpt-4o")` wrapper
+- POST to `{base_url}/chat/completions` with `authorization: Bearer <key>` header
+- Speaks the OpenAI Chat Completions wire format; compatible with:
+  - OpenAI directly (`base_url: "https://api.openai.com/v1"`)
+  - A [LiteLLM proxy](https://docs.litellm.ai/) fronting 100+ providers (model name uses `provider/model` syntax)
+  - Any OpenAI-compatible endpoint (Groq, Together, OpenRouter, Ollama, vLLM, Azure OpenAI, LM Studio)
+- Tool calls: OpenAI `tools[].function` schema; assistant-emitted `tool_calls` parsed back into FunctionCall parts; FunctionResponse parts serialized as `role: "tool"` messages with `tool_call_id`
+- System instruction injected as the first `role: "system"` message
 
 ### Mock (`ADK.Model.Mock`)
 - `Mock.new(responses: [...])` starts an Agent process
