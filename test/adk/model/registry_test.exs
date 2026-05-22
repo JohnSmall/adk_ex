@@ -106,4 +106,67 @@ defmodule ADK.Model.RegistryTest do
       assert {:error, :unknown_model} = Registry.resolve("random-name", api_key: "k")
     end
   end
+
+  describe "resolve/2 — extra_headers and receive_timeout passthrough" do
+    test "forwards extra_headers to Gemini" do
+      assert {:ok, %Gemini{extra_headers: [{"x-custom", "v"}]}} =
+               Registry.resolve("gemini-2.0-flash", api_key: "k", extra_headers: [{"x-custom", "v"}])
+    end
+
+    test "forwards receive_timeout to Gemini" do
+      assert {:ok, %Gemini{receive_timeout: 60_000}} =
+               Registry.resolve("gemini-2.0-flash", api_key: "k", receive_timeout: 60_000)
+    end
+
+    test "forwards extra_headers to Claude" do
+      assert {:ok, %Claude{extra_headers: [{"anthropic-beta", "caching"}]}} =
+               Registry.resolve("claude-sonnet-4-5", api_key: "k", extra_headers: [{"anthropic-beta", "caching"}])
+    end
+
+    test "forwards receive_timeout to Claude" do
+      assert {:ok, %Claude{receive_timeout: 300_000}} =
+               Registry.resolve("claude-sonnet-4-5", api_key: "k", receive_timeout: 300_000)
+    end
+
+    test "forwards extra_headers to DeepSeek (Claude struct)" do
+      assert {:ok, %Claude{extra_headers: [{"x-ds", "v"}], base_url: "https://api.deepseek.com/anthropic/v1"}} =
+               Registry.resolve("deepseek-v4-pro", api_key: "k", extra_headers: [{"x-ds", "v"}])
+    end
+
+    test "forwards receive_timeout to DeepSeek (Claude struct)" do
+      assert {:ok, %Claude{receive_timeout: 90_000}} =
+               Registry.resolve("deepseek-v4-pro", api_key: "k", receive_timeout: 90_000)
+    end
+
+    test "forwards extra_headers to OpenAI (LiteLlm)" do
+      assert {:ok, %LiteLlm{extra_headers: [{"x-org", "org-1"}]}} =
+               Registry.resolve("gpt-4o", api_key: "k", extra_headers: [{"x-org", "org-1"}])
+    end
+
+    test "forwards receive_timeout to OpenAI (LiteLlm)" do
+      assert {:ok, %LiteLlm{receive_timeout: 45_000}} =
+               Registry.resolve("gpt-4o", api_key: "k", receive_timeout: 45_000)
+    end
+
+    test "forwards extra_headers to slash-namespaced (LiteLlm)" do
+      assert {:ok, %LiteLlm{extra_headers: [{"x-proxy", "v"}]}} =
+               Registry.resolve("openai/gpt-4o", api_key: "k", base_url: "http://proxy", extra_headers: [{"x-proxy", "v"}])
+    end
+
+    test "forwards receive_timeout to slash-namespaced (LiteLlm)" do
+      assert {:ok, %LiteLlm{receive_timeout: 200_000}} =
+               Registry.resolve("openai/gpt-4o", api_key: "k", base_url: "http://proxy", receive_timeout: 200_000)
+    end
+
+    test "defaults are preserved when transport opts are not passed" do
+      assert {:ok, %Claude{extra_headers: [], receive_timeout: 120_000}} =
+               Registry.resolve("claude-sonnet-4-5", api_key: "k")
+
+      assert {:ok, %Gemini{extra_headers: [], receive_timeout: 120_000}} =
+               Registry.resolve("gemini-2.0-flash", api_key: "k")
+
+      assert {:ok, %LiteLlm{extra_headers: [], receive_timeout: 120_000}} =
+               Registry.resolve("gpt-4o", api_key: "k")
+    end
+  end
 end

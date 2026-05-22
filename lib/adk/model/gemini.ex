@@ -3,9 +3,25 @@ defmodule ADK.Model.Gemini do
   Google Gemini model provider.
 
   Calls the Gemini REST API (`generateContent` / `streamGenerateContent`).
+
+  ## Configuration
+
+      %ADK.Model.Gemini{
+        model_name: "gemini-2.0-flash",
+        api_key: System.fetch_env!("GEMINI_API_KEY"),
+        extra_headers: [{"x-custom", "value"}],
+        receive_timeout: 180_000
+      }
+
+  ### Options
+
+  - `:extra_headers` — additional request headers. Defaults to `[]`.
+  - `:receive_timeout` — HTTP receive timeout in milliseconds. Defaults to `120_000`.
   """
 
   @behaviour ADK.Model
+
+  @default_receive_timeout 120_000
 
   alias ADK.Model.{LlmRequest, LlmResponse}
   alias ADK.Types.{Content, FunctionCall, FunctionResponse, Part}
@@ -13,14 +29,18 @@ defmodule ADK.Model.Gemini do
   @type t :: %__MODULE__{
           model_name: String.t(),
           api_key: String.t(),
-          base_url: String.t()
+          base_url: String.t(),
+          extra_headers: [{String.t(), String.t()}],
+          receive_timeout: non_neg_integer()
         }
 
   @enforce_keys [:model_name, :api_key]
   defstruct [
     :model_name,
     :api_key,
-    base_url: "https://generativelanguage.googleapis.com/v1beta"
+    base_url: "https://generativelanguage.googleapis.com/v1beta",
+    extra_headers: [],
+    receive_timeout: @default_receive_timeout
   ]
 
   @impl ADK.Model
@@ -30,8 +50,9 @@ defmodule ADK.Model.Gemini do
   def generate_content(%__MODULE__{} = model, %LlmRequest{} = request, _stream) do
     url = "#{model.base_url}/models/#{model.model_name}:generateContent"
     body = build_request_body(request)
+    headers = build_headers(model)
 
-    case Req.post(url, json: body, params: [key: model.api_key], receive_timeout: 120_000) do
+    case Req.post(url, json: body, headers: headers, params: [key: model.api_key], receive_timeout: model.receive_timeout) do
       {:ok, %{status: 200, body: resp_body}} ->
         [parse_response(resp_body)]
 
@@ -53,6 +74,12 @@ defmodule ADK.Model.Gemini do
           }
         ]
     end
+  end
+
+  @doc false
+  @spec build_headers(t()) :: [{String.t(), String.t()}]
+  def build_headers(%__MODULE__{} = model) do
+    [{"content-type", "application/json"}] ++ model.extra_headers
   end
 
   @doc false

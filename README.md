@@ -97,6 +97,26 @@ DeepSeek's Anthropic-compatible API is supported via the registry:
 {:ok, model} = ADK.Model.Registry.resolve("deepseek-v4-pro", api_key: api_key)
 ```
 
+## Custom Headers and Timeout
+
+All providers accept `extra_headers` and `receive_timeout`:
+
+```elixir
+model = %ADK.Model.Claude{
+  model_name: "claude-sonnet-4-5",
+  api_key: api_key,
+  extra_headers: [{"anthropic-beta", "prompt-caching-2024-07-31"}],
+  receive_timeout: 180_000
+}
+
+# Or via the registry (works for all providers):
+{:ok, model} = ADK.Model.Registry.resolve("claude-sonnet-4-5",
+  api_key: api_key,
+  extra_headers: [{"anthropic-beta", "prompt-caching-2024-07-31"}],
+  receive_timeout: 180_000
+)
+```
+
 ## Documentation
 
 - [HexDocs](https://hexdocs.pm/adk_ex)

@@ -4,9 +4,27 @@ defmodule ADK.Model.Claude do
 
   Calls the Claude Messages API with format conversion between ADK types
   and Anthropic's content block format.
+
+  ## Configuration
+
+      %ADK.Model.Claude{
+        model_name: "claude-sonnet-4-5-20250929",
+        api_key: System.fetch_env!("ANTHROPIC_API_KEY"),
+        base_url: "https://api.anthropic.com/v1",
+        extra_headers: [{"anthropic-beta", "prompt-caching-2024-07-31"}],
+        receive_timeout: 180_000
+      }
+
+  ### Options
+
+  - `:extra_headers` — additional request headers appended after the required
+    `x-api-key`, `anthropic-version`, and `content-type` headers. Defaults to `[]`.
+  - `:receive_timeout` — HTTP receive timeout in milliseconds. Defaults to `120_000`.
   """
 
   @behaviour ADK.Model
+
+  @default_receive_timeout 120_000
 
   alias ADK.Model.{LlmRequest, LlmResponse}
   alias ADK.Types.{Content, FunctionCall, FunctionResponse, Part}
@@ -14,14 +32,18 @@ defmodule ADK.Model.Claude do
   @type t :: %__MODULE__{
           model_name: String.t(),
           api_key: String.t(),
-          base_url: String.t()
+          base_url: String.t(),
+          extra_headers: [{String.t(), String.t()}],
+          receive_timeout: non_neg_integer()
         }
 
   @enforce_keys [:model_name, :api_key]
   defstruct [
     :model_name,
     :api_key,
-    base_url: "https://api.anthropic.com/v1"
+    base_url: "https://api.anthropic.com/v1",
+    extra_headers: [],
+    receive_timeout: @default_receive_timeout
   ]
 
   @impl ADK.Model
@@ -31,14 +53,9 @@ defmodule ADK.Model.Claude do
   def generate_content(%__MODULE__{} = model, %LlmRequest{} = request, _stream) do
     url = "#{model.base_url}/messages"
     body = build_request_body(model, request)
+    headers = build_headers(model)
 
-    headers = [
-      {"x-api-key", model.api_key},
-      {"anthropic-version", "2023-06-01"},
-      {"content-type", "application/json"}
-    ]
-
-    case Req.post(url, json: body, headers: headers, receive_timeout: 120_000) do
+    case Req.post(url, json: body, headers: headers, receive_timeout: model.receive_timeout) do
       {:ok, %{status: 200, body: resp_body}} ->
         [parse_response(resp_body)]
 
@@ -60,6 +77,16 @@ defmodule ADK.Model.Claude do
           }
         ]
     end
+  end
+
+  @doc false
+  @spec build_headers(t()) :: [{String.t(), String.t()}]
+  def build_headers(%__MODULE__{} = model) do
+    [
+      {"x-api-key", model.api_key},
+      {"anthropic-version", "2023-06-01"},
+      {"content-type", "application/json"}
+    ] ++ model.extra_headers
   end
 
   @doc false

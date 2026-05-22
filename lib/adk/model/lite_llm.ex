@@ -49,9 +49,27 @@ defmodule ADK.Model.LiteLlm do
   `tool_calls` are parsed back into `ADK.Types.FunctionCall` parts, and
   `ADK.Types.FunctionResponse` parts are serialized as `role: "tool"`
   messages with `tool_call_id`.
+
+  ## Configuration
+
+      %ADK.Model.LiteLlm{
+        model_name: "gpt-4o",
+        api_key: System.fetch_env!("OPENAI_API_KEY"),
+        base_url: "https://api.openai.com/v1",
+        extra_headers: [{"x-custom", "value"}],
+        receive_timeout: 180_000
+      }
+
+  ### Options
+
+  - `:extra_headers` — additional request headers appended after the required
+    `authorization` and `content-type` headers. Defaults to `[]`.
+  - `:receive_timeout` — HTTP receive timeout in milliseconds. Defaults to `120_000`.
   """
 
   @behaviour ADK.Model
+
+  @default_receive_timeout 120_000
 
   alias ADK.Model.{LlmRequest, LlmResponse}
   alias ADK.Types.{Content, FunctionCall, FunctionResponse, Part}
@@ -59,14 +77,18 @@ defmodule ADK.Model.LiteLlm do
   @type t :: %__MODULE__{
           model_name: String.t(),
           api_key: String.t(),
-          base_url: String.t()
+          base_url: String.t(),
+          extra_headers: [{String.t(), String.t()}],
+          receive_timeout: non_neg_integer()
         }
 
   @enforce_keys [:model_name, :api_key]
   defstruct [
     :model_name,
     :api_key,
-    base_url: "https://api.openai.com/v1"
+    base_url: "https://api.openai.com/v1",
+    extra_headers: [],
+    receive_timeout: @default_receive_timeout
   ]
 
   @impl ADK.Model
@@ -76,13 +98,9 @@ defmodule ADK.Model.LiteLlm do
   def generate_content(%__MODULE__{} = model, %LlmRequest{} = request, _stream) do
     url = "#{model.base_url}/chat/completions"
     body = build_request_body(model, request)
+    headers = build_headers(model)
 
-    headers = [
-      {"authorization", "Bearer #{model.api_key}"},
-      {"content-type", "application/json"}
-    ]
-
-    case Req.post(url, json: body, headers: headers, receive_timeout: 120_000) do
+    case Req.post(url, json: body, headers: headers, receive_timeout: model.receive_timeout) do
       {:ok, %{status: 200, body: resp_body}} ->
         [parse_response(resp_body)]
 
@@ -104,6 +122,15 @@ defmodule ADK.Model.LiteLlm do
           }
         ]
     end
+  end
+
+  @doc false
+  @spec build_headers(t()) :: [{String.t(), String.t()}]
+  def build_headers(%__MODULE__{} = model) do
+    [
+      {"authorization", "Bearer #{model.api_key}"},
+      {"content-type", "application/json"}
+    ] ++ model.extra_headers
   end
 
   @doc false

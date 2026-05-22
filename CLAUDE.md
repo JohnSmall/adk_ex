@@ -60,7 +60,7 @@ mix dialyzer      # Type checking
 - `ADK.Model` + `ADK.Model.LlmRequest` + `ADK.Model.LlmResponse` — LLM abstraction
 - `ADK.Model.Mock` / `ADK.Model.Gemini` / `ADK.Model.Claude` / `ADK.Model.LiteLlm` — Providers
 - `ADK.Model.LiteLlm` — Generic OpenAI-compatible provider (mirrors Python ADK's `LiteLlm`). Works against OpenAI, the LiteLLM proxy, or any OpenAI-compatible endpoint (Groq, Together, OpenRouter, Ollama, vLLM, Azure OpenAI, etc.)
-- `ADK.Model.Registry` — Model name → provider resolution. Resolves `gemini-*` → Gemini, `claude-*` → Claude, `deepseek-*` → Claude (DeepSeek Anthropic endpoint), `gpt-*`/`o1*`/`o3*` → LiteLlm@OpenAI, `provider/model` names → LiteLlm (base_url required)
+- `ADK.Model.Registry` — Model name → provider resolution. Resolves `gemini-*` → Gemini, `claude-*` → Claude, `deepseek-*` → Claude (DeepSeek Anthropic endpoint), `gpt-*`/`o1*`/`o3*` → LiteLlm@OpenAI, `provider/model` names → LiteLlm (base_url required). All providers accept `extra_headers` and `receive_timeout`.
 - `ADK.Tool` + `ADK.Tool.Context` + `ADK.Tool.FunctionTool` — Tool system
 - `ADK.Flow` — Stream.resource/3 state machine (max 25 iterations)
 - `ADK.Flow.Processors.*` — Basic, ToolProcessor, Instructions, AgentTransfer, Contents

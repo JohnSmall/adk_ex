@@ -80,6 +80,30 @@ DeepSeek exposes an Anthropic-compatible API at `https://api.deepseek.com/anthro
 }
 ```
 
+## Rule: use `extra_headers` and `receive_timeout` for transport configuration
+
+All three real providers (`Claude`, `Gemini`, `LiteLlm`) accept `:extra_headers` and `:receive_timeout` on the struct. These can also be passed through `Registry.resolve/2`.
+
+```elixir
+# Struct
+%ADK.Model.Claude{
+  model_name: "claude-sonnet-4-5",
+  api_key: key,
+  extra_headers: [{"anthropic-beta", "prompt-caching-2024-07-31"}],
+  receive_timeout: 180_000
+}
+
+# Registry
+{:ok, model} = ADK.Model.Registry.resolve("claude-sonnet-4-5",
+  api_key: key,
+  extra_headers: [{"anthropic-beta", "prompt-caching-2024-07-31"}],
+  receive_timeout: 180_000
+)
+```
+
+- `extra_headers` — list of `{name, value}` tuples appended after the provider's required headers. Defaults to `[]`.
+- `receive_timeout` — HTTP receive timeout in milliseconds. Defaults to `120_000`.
+
 ## Registry resolution summary
 
 ```elixir
@@ -95,7 +119,7 @@ ADK.Model.Registry.resolve(name, opts)
 | `"provider/model"` (contains `/`) | `LiteLlm` | **required** |
 | anything else | `{:error, :unknown_model}` | — |
 
-All patterns require `:api_key` in `opts`.
+All patterns require `:api_key` in `opts`. All patterns accept optional `:extra_headers` and `:receive_timeout`.
 
 ## Function calling
 

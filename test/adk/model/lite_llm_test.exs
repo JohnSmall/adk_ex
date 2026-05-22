@@ -28,6 +28,79 @@ defmodule ADK.Model.LiteLlmTest do
 
       assert model.base_url == "http://localhost:4000"
     end
+
+    test "defaults extra_headers to empty list" do
+      model = %LiteLlm{model_name: "gpt-4o", api_key: "sk-test"}
+      assert model.extra_headers == []
+    end
+
+    test "defaults receive_timeout to 120_000" do
+      model = %LiteLlm{model_name: "gpt-4o", api_key: "sk-test"}
+      assert model.receive_timeout == 120_000
+    end
+
+    test "accepts custom extra_headers" do
+      model = %LiteLlm{
+        model_name: "gpt-4o",
+        api_key: "sk-test",
+        extra_headers: [{"x-custom", "value"}]
+      }
+
+      assert model.extra_headers == [{"x-custom", "value"}]
+    end
+
+    test "accepts custom receive_timeout" do
+      model = %LiteLlm{model_name: "gpt-4o", api_key: "sk-test", receive_timeout: 60_000}
+      assert model.receive_timeout == 60_000
+    end
+  end
+
+  describe "build_headers/1" do
+    test "includes required headers with default config" do
+      model = %LiteLlm{model_name: "gpt-4o", api_key: "sk-test"}
+      headers = LiteLlm.build_headers(model)
+
+      assert {"authorization", "Bearer sk-test"} in headers
+      assert {"content-type", "application/json"} in headers
+    end
+
+    test "appends extra_headers after required headers" do
+      model = %LiteLlm{
+        model_name: "gpt-4o",
+        api_key: "sk-test",
+        extra_headers: [{"x-custom", "val"}]
+      }
+
+      headers = LiteLlm.build_headers(model)
+
+      assert [
+               {"authorization", "Bearer sk-test"},
+               {"content-type", "application/json"},
+               {"x-custom", "val"}
+             ] == headers
+    end
+
+    test "supports multiple extra headers" do
+      model = %LiteLlm{
+        model_name: "gpt-4o",
+        api_key: "sk-test",
+        extra_headers: [
+          {"x-org-id", "org-123"},
+          {"x-request-id", "req-456"}
+        ]
+      }
+
+      headers = LiteLlm.build_headers(model)
+      assert length(headers) == 4
+      assert {"x-org-id", "org-123"} in headers
+      assert {"x-request-id", "req-456"} in headers
+    end
+
+    test "empty extra_headers produces only required headers" do
+      model = %LiteLlm{model_name: "gpt-4o", api_key: "sk-test", extra_headers: []}
+      headers = LiteLlm.build_headers(model)
+      assert length(headers) == 2
+    end
   end
 
   describe "build_request_body/2 — messages" do

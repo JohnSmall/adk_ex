@@ -127,6 +127,13 @@ ollama = %ADK.Model.LiteLlm{
   api_key: "none",
   base_url: "http://localhost:11434/v1"
 }
+
+# Custom headers and timeout (all providers)
+{:ok, model} = ADK.Model.Registry.resolve("claude-sonnet-4-5",
+  api_key: key,
+  extra_headers: [{"anthropic-beta", "prompt-caching-2024-07-31"}],
+  receive_timeout: 180_000
+)
 ```
 
 See `adk_ex:models` for deeper guidance.
@@ -137,7 +144,7 @@ See `adk_ex:models` for deeper guidance.
 2. **Mock model needs `Mock.new/1`** — use `ADK.Model.Mock.new(responses: [...])`, never bare `%ADK.Model.Mock{}`. It starts an Agent process for response sequencing.
 3. **Agent behaviour has no module functions** — call `agent.__struct__.run(agent, ctx)` or the implementing module directly. `ADK.Agent` is a behaviour, not a dispatcher.
 4. **Telemetry prefix is `[:adk_ex, ...]`** — not `[:adk, ...]`. Events: `[:adk_ex, :llm, :start|:stop]`, `[:adk_ex, :tool, :start|:stop]`.
-5. **Model.Registry.resolve/2** — pattern-matches on name: `"gemini-*"` -> Gemini, `"claude-*"` -> Claude, `"deepseek-*"` -> Claude (DeepSeek endpoint), `"gpt-*"`/`"o1*"`/`"o3*"` -> LiteLlm@OpenAI, `"provider/model"` (e.g. `"openai/gpt-4o"`, `"anthropic/claude-3-5-sonnet-20241022"`) -> LiteLlm (requires `base_url:` for a LiteLLM proxy).
+5. **Model.Registry.resolve/2** — pattern-matches on name: `"gemini-*"` -> Gemini, `"claude-*"` -> Claude, `"deepseek-*"` -> Claude (DeepSeek endpoint), `"gpt-*"`/`"o1*"`/`"o3*"` -> LiteLlm@OpenAI, `"provider/model"` (e.g. `"openai/gpt-4o"`, `"anthropic/claude-3-5-sonnet-20241022"`) -> LiteLlm (requires `base_url:` for a LiteLLM proxy). All patterns accept optional `:extra_headers` and `:receive_timeout`.
 6. **Use `ADK.Model.LiteLlm` for OpenAI and any OpenAI-compatible endpoint** — mirrors Python ADK's `LiteLlm(model="openai/gpt-4o")`. Set `base_url` to OpenAI, a LiteLLM proxy, or any OpenAI-compatible API (Groq, Together, OpenRouter, Ollama, vLLM, Azure OpenAI, LM Studio, etc.). Do not build a bespoke OpenAI client.
 7. **Plugin callbacks return `{value | nil, updated_context}`** — nil means continue to next plugin; non-nil short-circuits.
 8. **All Plugin.Manager.run_* functions accept `nil`** as first arg (no-op) — no nil checks needed at call sites.
